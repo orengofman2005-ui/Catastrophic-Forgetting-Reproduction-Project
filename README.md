@@ -1,17 +1,74 @@
-# Catastrophic Forgetting - Reproduction Project
+# Catastrophic Forgetting – Reproduction Project
 
-This repository contains the source code and documentation for reproducing the results of the paper regarding Catastrophic Forgetting.
+This repository contains code and documentation for reproducing key results from the paper on catastrophic forgetting.
 
-## 📖 Essential Documentation
-* **[Final Takeaways (Hebrew)](./takeaways.md)** - My personal reflection and project conclusions (1-2 pages).
-* **[AI Usage & Process](./docs/ai_usage.md)** - Documentation of how AI was used to plan and verify the project.
+## Documentation
 
-## 🛠️ Project Structure & Logic (Algorithmic Thinking)
-1. **Data Prep:** `prepare_amazon_npz.py` - Processes the dataset for training.
-2. **Main Engine:** `pytorch_reproduction_suite.py` - The core logic for training and forgetting mitigation.
-3. **Visualization:** `plot_results.py` - Generates graphs to compare with the original paper's results.
+### Final Takeaways
+Contains personal conclusions and interpretation of the reproduced results.
 
-## 🚀 How to Run
-```bash
+File:
+docs/takeaway.md
+
+### AI Usage & Reproducibility
+Documents:
+- how AI assisted planning, debugging and verification
+- prompt examples used during development
+- human-in-the-loop validation process
+- reproducibility settings
+
+File:
+docs/ai_usage.md
+
+---
+
+## Project Structure
+
+Data preparation  
+prepare_amazon_npz.py
+
+Training / mitigation engine  
+pytorch_reproduction_suite.py
+
+Visualization  
+plot_results.py
+
+---
+
+## Reproducibility Settings
+
+Fixed random seed:
+42
+
+Controlled parameters:
+- learning rate: [fill yours]
+- epochs: [fill yours]
+- patience: [fill yours]
+
+---
+
+## Run
+
+Step 1:
+python prepare_amazon_npz.py
+
+Step 2:
 python pytorch_reproduction_suite.py
+
+Step 3:
 python plot_results.py
+
+---
+
+## Expected Outputs
+
+Generated files:
+
+results/*.csv
+
+figures:
+- figure1.png
+- figure2.png
+- figure3.png
+
+These outputs should reproduce the main qualitative trends reported in the original paper.
