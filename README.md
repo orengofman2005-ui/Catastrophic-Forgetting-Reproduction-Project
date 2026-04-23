@@ -1,64 +1,60 @@
-🧠 Catastrophic Forgetting – Reproduction Project
-This repository contains the source code and documentation for an academic reproduction of results regarding Catastrophic Forgetting in neural networks. The study specifically analyzes the balance between learning new tasks and retaining prior knowledge across sequential training stages.
+# 🧠 פרויקט שחזור: שכחה קטסטרופלית (Catastrophic Forgetting)
 
-📂 Project Navigation
-In accordance with academic documentation requirements, the following files detail the project's methodology and findings:
+מאגר זה מכיל את קוד המקור והתיעוד עבור שחזור אקדמי של תוצאות המחקר בנושא שכחה קטסטרופלית ברשתות נוירונים. המחקר מנתח באופן ספציפי את האיזון בין למידת משימות חדשות לבין שימור ידע קודם לאורך שלבי אימון סדרתיים.
 
-Final Takeaways: A reflective analysis (1–2 pages) detailing personal conclusions, interpretation of reproduced results, and insights gained regarding the learning process.
+## 📂 ניווט בפרויקט
 
-AI Usage & Methodology: Documentation of the integration of AI tools for code scaffolding and initial planning, including the human-in-the-loop verification process.
+בהתאם לדרישות התיעוד האקדמיות, הקבצים הבאים מפרטים את המתודולוגיה והממצאים של הפרויקט:
 
-Algorithmic Thinking: A modular breakdown of the project stages, implementation logic, and specific verification protocols used for each phase.
+*   **תובנות ומסקנות (Takeaways)** – ניתוח רפלקטיבי (1–2 עמודים) המפרט מסקנות אישיות, פרשנות לתוצאות המשוחזרות ותובנות שנרכשו בתהליך הלמידה.
+*   **שימוש ב-AI ומתודולוגיה** – תיעוד השילוב של כלי בינה מלאכותית לתכנון ראשוני ובניית שלד הקוד, כולל תהליך האימות האנושי (Human-in-the-loop).
+*   **חשיבה אלגוריתמית** – פירוט מודולרי של שלבי הפרויקט, לוגיקת המימוש ופרוטוקולי האימות הספציפיים ששימשו בכל שלב.
+*   **תוכניות עבודה (AI Plans)** – מסמכי התכנון הגולמיים שנוצרו בשלב התכנון הראשוני ושימשו לבניית מבנה הפרויקט.
 
-AI Work Plans: Raw planning documents generated during the initial design phase, used to structure the project's development.
+## 🛠 מבנה הפרויקט
 
-🛠 Project Structure
-The repository is organized to facilitate peer review and modular testing:
+המאגר מאורגן בצורה המאפשרת ביקורת עמיתים ובדיקה מודולרית:
 
-Data Preprocessing: prepare_amazon_npz.py – Prepares and formats the Amazon Reviews dataset for continual learning scenarios.
+*   **עיבוד נתונים: `prepare_amazon_npz.py`** – הכנה ופורמט של מערך הנתונים (Amazon Reviews) עבור תרחישי למידה מתמשכת.
+*   **מנוע שחזור: `pytorch_reproduction_suite.py`** – מימוש לוגיקת האימון ואסטרטגיות לצמצום שכחה, תוך התמקדות באלגוריתם ה-Dropout.
+*   **ויזואליזציה: `plot_results.py`** – הפקת גרפים השוואתיים המבוססים על לוגים מהניסויים.
 
-Reproduction Engine: pytorch_reproduction_suite.py – Implements the core training loops and forgetting mitigation strategies (e.g., EWC, Dropout).
+## ⚙️ מערך ניסוי מבוקר
 
-Visualization: plot_results.py – Generates comparative visualizations based on experimental logs.
+למרות שזהות נומרית מדויקת בין סביבות חומרה שונות היא נדירה, פרויקט זה משתמש במערך מבוקר כדי להבטיח שניתן לשחזר את המגמות האיכותיות המרכזיות שדווחו במאמר המקורי.
 
-⚙️ Controlled Experimental Setup
-While exact numerical identity across different hardware environments is rarely feasible, this project employs a controlled setup to ensure that the main qualitative trends reported in the original paper can be recovered.
+### מתודולוגיית עבודה
+השערה $\leftarrow$ מימוש $\leftarrow$ בדיקה $\leftarrow$ תיקון $\leftarrow$ השוואה $\leftarrow$ שחזור
 
-Experimental Pipeline: Hypothesis → Implementation → Testing → Refinement → Comparison → Reproduction.
+*   **קיבוע Seed רנדומלי:** נקבע ל-42 (עבור PyTorch ו-NumPy) כדי לצמצם שונות סטוכסטית בין הרצות מקומיות.
+*   **הגדרות היפר-פרמטרים:**
+    *   **טווחי חיפוש:** פרמטרים כמו קצב למידה (Learning Rate) ודעיכת משקל (Weight Decay) הוגבלו לטווחים המפורטים בנספחי המאמר.
+    *   **עצירה מוקדמת (Early Stopping):** הוגדרה סבלנות (Patience) של 100 אפוקים כדי למנוע Overfitting ולהבטיח השוואה הוגנת בין משימות.
+*   **צמצום שונות:** התוצאות המוצגות מבוססות על הרצות חוזרות כדי להבטיח שהמגמות המדווחות יציבות ואינן תוצר מקרי של אתחול ספציפי.
 
-Fixed Random Seed: 42 (applied to PyTorch and NumPy) to minimize stochastic variance between local runs.
+## 🚀 מדריך הרצה
 
-Hyperparameter Configuration:
+כדי לשחזר את תוצאות הניסויים, יש להריץ את הסקריפטים הבאים לפי הסדר:
 
-Search Ranges: Parameters such as Learning Rate and Weight Decay were constrained to ranges specified in the paper's appendix.
-
-Early Stopping: A patience configuration of [insert value] was implemented to prevent overfitting and ensure fair comparison across tasks.
-
-Variability Reduction: The results presented are based on repeated runs to ensure that the reported trends are robust and not artifacts of a single initialization.
-
-🚀 Execution Guide
-To reproduce the experimental results, execute the following scripts in sequence:
-
-Bash
-# Step 1: Preprocess the raw dataset
+```bash
+# שלב 1: עיבוד מקדים של מערך הנתונים
 python prepare_amazon_npz.py
 
-# Step 2: Execute the training and mitigation suite
+# שלב 2: הרצת מנוע האימון והשחזור
 python pytorch_reproduction_suite.py
 
-# Step 3: Generate comparative figures
+# שלב 3: הפקת גרפים השוואתיים
 python plot_results.py
-📊 Expected Qualitative Outputs
-The execution generates data logs and figures intended to align with the primary trends observed in the original study:
+```
 
-Data Logs: Saved in results/*.csv.
+## 📊 תוצרי איכות מצופים
 
-Visualizations:
+ההרצה מייצרת לוגים וגרפים שנועדו להתכתב עם המגמות העיקריות שנצפו במחקר המקורי:
 
-figure1.png: MNIST Permutation results.
+*   **לוגים של נתונים:** נשמרים בתיקיית `results/*.csv`.
+*   **ויזואליזציות:**
+    *   `figure1.png`: תוצאות עיצוב מחדש של קלט (Input Reformatting - MNIST Permutation).
+    *   `figure2.png`: משימות דומות (Similar Tasks - Amazon Reviews).
+    *   `figure3.png`: משימות שונות (Dissimilar Tasks - MNIST & Amazon).
 
-figure2.png: Similar Tasks (Amazon Reviews).
-
-figure3.png: Dissimilar Tasks.
-
-These outputs are expected to demonstrate the performance trade-off between task plasticity and memory stability, consistent with the paper's conclusions.
+תוצרים אלו מדגימים את ה-Trade-off בין גמישות בלמידת משימה חדשה לבין יציבות הזיכרון, תוך הדגשת היעילות של Dropout בצמצום אובדן המידע.
