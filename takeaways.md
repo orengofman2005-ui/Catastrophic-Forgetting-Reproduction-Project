@@ -17,12 +17,12 @@
 ## הגרפים המשוחזרים
 
 Figure 1 – MNIST to MNIST Permutation  
-![Scenario 1](fig_s1_frontier.png)
+![Scenario 1](results_fixed/fig_s1_frontier.png)
 
 Figure 2 – Similar Tasks (Amazon Reviews)  
-![Scenario 2](fig_s2_frontier.png)
+![Scenario 2](results_fixed/fig_s2_frontier.png)
 
 Figure 3 – Dissimilar Tasks  
-![Scenario 3](fig_s3_frontier.png)
+![Scenario 3](results_fixed/fig_s3_frontier.png)
 
 מהשוואה בין הגרפים שהפקתי לבין הגרפים במאמר ראיתי שלמרות שהתוצאות שלי אינן זהות לחלוטין, המגמות המרכזיות נשמרו. בשלושת התרחישים נראתה מעטפת tradeoff דומה בין שימור ביצועים במשימה הישנה לבין הסתגלות למשימה החדשה, ובמקרים רבים שיטות המבוססות על Dropout אכן הראו ביצועים טובים יותר, בדומה למסקנות המאמר.
