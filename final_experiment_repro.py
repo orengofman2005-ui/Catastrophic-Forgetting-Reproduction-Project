@@ -6,22 +6,10 @@ Faithful reproduction of:
    Gradient-Based Neural Networks"
   Goodfellow, Mirza, Xiao, Courville, Bengio (arXiv:1312.6211v3, 2015)
 
-Key fixes vs pytorch_reproduction_suite.py
--------------------------------------------
-1. PATIENCE       – 100 epochs (paper §4), not 12.
-2. TRIALS         – 25 per condition (paper §3.3), not 3/10.
-3. DROPOUT RATES  – p_hidden=0.5, p_visible=0.2 (paper §3.1). Already correct;
-                    now explicitly documented.
-4. HIDDEN SIZES   – wider candidate pool for ReLU/Sigmoid to allow the "noticeably
-                    larger" dropout nets described in §3.1.
-5. BIAS INIT      – Maxout/LWTA: 0; Sigmoid: slightly negative; ReLU: slightly
-                    positive. Matches paper §4 exactly.
-6. FRONTIER CURVE – Pareto lower-left in log-space (paper §4 description), not
-                    a convex hull.
-7. SCENARIO 2     – Kitchen→DVD as the paper's specific pair (§4.2).
-8. SCENARIO 3     – MNIST(2,9)→Amazon(DVD) as in paper §4.3.
-9. BAR CHARTS     – SGD vs Dropout grouped side-by-side (matching Figs 2/4/6).
-10. NameError fix – original __main__ called undefined run_scenario_2/3 functions.
+Colab-ready version:
+  - שומר checkpoint אחרי כל condition (לא רק בסוף התרחיש)
+  - אם קורס באמצע — ממשיך אוטומטית מהמקום שנעצר
+  - כל התוצאות נשמרות ל-Google Drive
 """
 
 import copy
@@ -42,9 +30,16 @@ from sklearn.decomposition import TruncatedSVD
 from torch.utils.data import DataLoader, TensorDataset, Subset
 from torchvision import datasets, transforms
 
-# ── Reproducibility ───────────────────────────────────────────────────────────
-SEED       = 42
-DEVICE     = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# =============================================================================
+# הגדרות בסיסיות
+# =============================================================================
+
+SEED = 42
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# תיקיית תוצאות — תוגדר מחוץ לקובץ ב-Colab לפני הרצה:
+# import final_experiment_repro as exp
+# exp.RESULTS_DIR = "/content/drive/MyDrive/forgetting_results"
 RESULTS_DIR = "results_repro"
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
@@ -54,17 +49,9 @@ torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
-# ── Experiment switches ───────────────────────────────────────────────────────
-RUN_SCENARIO_1            = True
-RUN_SCENARIO_2_PAPER_PAIR = True   # Kitchen → DVD  (paper's exact pair)
-RUN_SCENARIO_3            = True   # MNIST(2,9) → Amazon DVD
-
-# Paper uses 25; reduce to 5 for a fast smoke-test.
-TRIALS_PER_CONDITION = 25          # paper: 25
-
-# Paper §4: early-stopping patience = 100 epochs.
-PATIENCE_OLD = 100
-PATIENCE_NEW = 100
+TRIALS_PER_CONDITION = 25   # paper: 25
+PATIENCE_OLD = 100           # paper §4
+PATIENCE_NEW = 100           # paper §4
 MAX_EPOCHS_OLD = 1000
 MAX_EPOCHS_NEW = 1000
 BATCH_SIZE = 100
@@ -87,7 +74,6 @@ def count_parameters(model: nn.Module) -> int:
 
 
 def apply_max_norm_constraint(model: nn.Module, max_val: float) -> None:
-    """Max-norm weight constraint (Srebro & Shraibman, 2005) – paper §3."""
     with torch.no_grad():
         for name, param in model.named_parameters():
             if param.dim() > 1 and "weight" in name:
@@ -97,7 +83,6 @@ def apply_max_norm_constraint(model: nn.Module, max_val: float) -> None:
 
 
 def evaluate_error(model: nn.Module, loader: DataLoader) -> float:
-    """Classification error rate (1 − accuracy)."""
     model.eval()
     total, correct = 0, 0
     with torch.no_grad():
@@ -119,7 +104,6 @@ def _split_dataset(dataset, n_val: int):
 # =============================================================================
 
 def get_permuted_mnist_loaders(permutation, batch_size=BATCH_SIZE, val_size=5000):
-    """§4.1 – Input Reformatting: MNIST with fixed pixel permutation."""
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x.view(-1)[permutation]),
@@ -136,7 +120,6 @@ def get_permuted_mnist_loaders(permutation, batch_size=BATCH_SIZE, val_size=5000
 
 def get_padded_binary_mnist_loaders(target_dim, classes=(2, 9),
                                     batch_size=BATCH_SIZE, val_size=1000):
-    """§4.3 – Dissimilar Tasks (old task): binary MNIST zero-padded to target_dim."""
     def remap(y): return 0 if y == classes[0] else 1
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -151,8 +134,8 @@ def get_padded_binary_mnist_loaders(target_dim, classes=(2, 9),
             xs.append(x); ys.append(remap(int(y)))
         return TensorDataset(torch.stack(xs), torch.tensor(ys, dtype=torch.long))
 
-    tr_idx = [i for i, y in enumerate(full_train.targets.tolist()) if y in classes]
-    te_idx = [i for i, y in enumerate(test_full.targets.tolist())  if y in classes]
+    tr_idx   = [i for i, y in enumerate(full_train.targets.tolist()) if y in classes]
+    te_idx   = [i for i, y in enumerate(test_full.targets.tolist())  if y in classes]
     train_td = to_td(Subset(full_train, tr_idx))
     test_td  = to_td(Subset(test_full,  te_idx))
     train_td, val_td = _split_dataset(train_td, n_val=val_size)
@@ -164,16 +147,14 @@ def get_padded_binary_mnist_loaders(target_dim, classes=(2, 9),
 
 
 def get_amazon_from_npz(npz_path, batch_size=BATCH_SIZE, val_ratio=0.2):
-    """Load a pre-processed Amazon category .npz file."""
     data      = np.load(npz_path, allow_pickle=True)
     X_tr_full = torch.tensor(data["X_train"], dtype=torch.float32)
     y_tr_full = torch.tensor(data["y_train"], dtype=torch.long)
     X_te      = torch.tensor(data["X_test"],  dtype=torch.float32)
     y_te      = torch.tensor(data["y_test"],  dtype=torch.long)
-
-    n_val = max(1, int(val_ratio * len(X_tr_full)))
-    idx   = torch.randperm(len(X_tr_full))
-    vi, ti = idx[:n_val], idx[n_val:]
+    n_val     = max(1, int(val_ratio * len(X_tr_full)))
+    idx       = torch.randperm(len(X_tr_full))
+    vi, ti    = idx[:n_val], idx[n_val:]
     return (
         DataLoader(TensorDataset(X_tr_full[ti], y_tr_full[ti]), batch_size=batch_size, shuffle=True),
         DataLoader(TensorDataset(X_tr_full[vi], y_tr_full[vi]), batch_size=batch_size, shuffle=False),
@@ -184,21 +165,17 @@ def get_amazon_from_npz(npz_path, batch_size=BATCH_SIZE, val_ratio=0.2):
 
 
 def reduce_feature_dim(train_loader, val_loader, test_loader, target_dim):
-    """§4.3 – PCA-reduce Amazon (5000-dim) to target_dim=784 using TruncatedSVD."""
     def gather(loader):
         xs, ys = zip(*[(x, y) for x, y in loader])
         return torch.cat(xs).numpy(), torch.cat(ys)
-
     X_tr, y_tr = gather(train_loader)
     X_va, y_va = gather(val_loader)
     X_te, y_te = gather(test_loader)
-
     svd  = TruncatedSVD(n_components=target_dim, random_state=SEED)
     X_tr = svd.fit_transform(X_tr)
     X_va = svd.transform(X_va)
     X_te = svd.transform(X_te)
-
-    bs = train_loader.batch_size
+    bs   = train_loader.batch_size
     return (
         DataLoader(TensorDataset(torch.tensor(X_tr, dtype=torch.float32), y_tr), batch_size=bs, shuffle=True),
         DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), y_va), batch_size=bs, shuffle=False),
@@ -211,7 +188,6 @@ def reduce_feature_dim(train_loader, val_loader, test_loader, target_dim):
 # =============================================================================
 
 class Maxout(nn.Module):
-    """Maxout activation (Goodfellow et al., 2013b): h_i = max_{j in group} z_j"""
     def __init__(self, pool_size=2):
         super().__init__()
         self.pool_size = pool_size
@@ -221,33 +197,21 @@ class Maxout(nn.Module):
 
 
 class LWTA(nn.Module):
-    """
-    Hard Local Winner-Take-All (Srivastava et al., 2013).
-    Ties broken uniformly at random (paper footnote 1).
-    """
     def __init__(self, group_size=2):
         super().__init__()
         self.group_size = group_size
     def forward(self, x):
         b, d  = x.shape
         x_g   = x.view(b, d // self.group_size, self.group_size)
-        noise = torch.rand_like(x_g) * 1e-6          # random tie-breaking
+        noise = torch.rand_like(x_g) * 1e-6
         mask  = ((x_g + noise) >= (x_g + noise).max(dim=2, keepdim=True).values).float()
         mask  = (mask / mask.sum(dim=2, keepdim=True).clamp(min=1) > 0).float()
         return (x_g * mask).view(b, d)
 
 
 class MLP(nn.Module):
-    """
-    Two-hidden-layer MLP + softmax output (paper §4).
-    Dropout: p_visible=0.2, p_hidden=0.5 (paper §3.1 "well-known constants").
-    Bias init follows paper §4:
-      Maxout/LWTA → 0 (avoids dominant filter)
-      Sigmoid     → slightly negative (promotes sparsity)
-      ReLU        → slightly positive (prevents dead units)
-    """
-    P_VIS = 0.2
-    P_HID = 0.5
+    P_VIS = 0.2   # dropout on visible units  (paper §3.1)
+    P_HID = 0.5   # dropout on hidden units   (paper §3.1)
 
     def __init__(self, input_dim, hidden_dim, output_dim,
                  activation, use_dropout, pool_size=2, init_name="xavier"):
@@ -255,20 +219,16 @@ class MLP(nn.Module):
         self.activation_name = activation
         self.drop_in  = nn.Dropout(self.P_VIS) if use_dropout else nn.Identity()
         self.drop_hid = nn.Dropout(self.P_HID) if use_dropout else nn.Identity()
-
-        # Maxout/LWTA expand pre-activation width by pool_size
         expansion = pool_size if activation in {"Maxout", "LWTA"} else 1
         pre_dim   = hidden_dim * expansion
-
-        self.fc1 = nn.Linear(input_dim,  pre_dim)
-        self.fc2 = nn.Linear(hidden_dim, pre_dim)
-        self.fc3 = nn.Linear(hidden_dim, output_dim)
-
+        self.fc1  = nn.Linear(input_dim,  pre_dim)
+        self.fc2  = nn.Linear(hidden_dim, pre_dim)
+        self.fc3  = nn.Linear(hidden_dim, output_dim)
         acts = {
-            "ReLU":    (nn.ReLU(),          nn.ReLU()),
-            "Sigmoid": (nn.Sigmoid(),        nn.Sigmoid()),
-            "Maxout":  (Maxout(pool_size),   Maxout(pool_size)),
-            "LWTA":    (LWTA(pool_size),     LWTA(pool_size)),
+            "ReLU":    (nn.ReLU(),        nn.ReLU()),
+            "Sigmoid": (nn.Sigmoid(),      nn.Sigmoid()),
+            "Maxout":  (Maxout(pool_size), Maxout(pool_size)),
+            "LWTA":    (LWTA(pool_size),   LWTA(pool_size)),
         }
         if activation not in acts:
             raise ValueError(f"Unknown activation: {activation}")
@@ -285,13 +245,13 @@ class MLP(nn.Module):
                 nn.init.constant_(m.bias, 0.0)
             elif act == "Sigmoid":
                 nn.init.xavier_uniform_(m.weight)
-                nn.init.uniform_(m.bias, -0.2, 0.0)   # negative → sparsity
-            else:  # ReLU
+                nn.init.uniform_(m.bias, -0.2, 0.0)
+            else:
                 if init_name == "kaiming":
                     nn.init.kaiming_uniform_(m.weight, nonlinearity="relu")
                 else:
                     nn.init.xavier_uniform_(m.weight)
-                nn.init.uniform_(m.bias, 0.0, 0.1)    # positive → no dead units
+                nn.init.uniform_(m.bias, 0.0, 0.1)
 
     def forward(self, x):
         x = self.drop_in(x)
@@ -303,7 +263,7 @@ class MLP(nn.Module):
 
 
 # =============================================================================
-# Section 4 – Hyperparameter sampling  (paper §3.3 – random search)
+# Section 4 – Hyperparameter sampling
 # =============================================================================
 
 @dataclass
@@ -316,10 +276,6 @@ class HParams:
 
 
 def sample_hparams(activation: str, rng: random.Random) -> HParams:
-    """
-    Random search over the ranges described in paper §4.
-    Wider hidden_dim pool for ReLU/Sigmoid allows the larger dropout nets (§3.1).
-    """
     if activation in {"ReLU", "Sigmoid"}:
         hidden_dim = rng.choice([128, 256, 512, 800, 1024, 1200, 1600, 2048])
     else:
@@ -358,7 +314,6 @@ def train_one_epoch(model, loader, optimizer, max_norm):
 
 def train_task1(model, train_ldr, val_ldr, optimizer, max_norm,
                 max_epochs=MAX_EPOCHS_OLD, patience=PATIENCE_OLD):
-    """Train on Task 1; restore best weights (paper §4)."""
     best_val, best_state, stale = float("inf"), copy.deepcopy(model.state_dict()), 0
     for _ in range(max_epochs):
         train_one_epoch(model, train_ldr, optimizer, max_norm)
@@ -376,11 +331,6 @@ def train_task1(model, train_ldr, val_ldr, optimizer, max_norm,
 def train_task2_and_log(model, t1_val, t1_test, t2_train, t2_val, t2_test,
                         optimizer, max_norm,
                         max_epochs=MAX_EPOCHS_NEW, patience=PATIENCE_NEW):
-    """
-    Train on Task 2; log (old_test_err, new_test_err) after every epoch.
-    Stop when joint val error (val_old + val_new) does not improve for
-    *patience* epochs — exactly as described in paper §4.
-    """
     best_joint, best_state, stale = float("inf"), copy.deepcopy(model.state_dict()), 0
     trajectory = []
     for _ in range(max_epochs):
@@ -402,23 +352,39 @@ def train_task2_and_log(model, t1_val, t1_test, t2_train, t2_val, t2_test,
 
 
 # =============================================================================
-# Section 6 – Hyperparameter search driver
+# Section 6 – Hyperparameter search  (עם שמירת checkpoint אחרי כל condition)
 # =============================================================================
 
 ACTIVATIONS   = ["Sigmoid", "ReLU", "Maxout", "LWTA"]
 DROPOUT_FLAGS = [False, True]
 
 
+def _condition_ckpt_path(scenario_name: str, label: str) -> str:
+    """נתיב לקובץ checkpoint של condition בודד — לשחזור במקרה של קריסה."""
+    safe_label = label.replace(" ", "_")
+    return os.path.join(RESULTS_DIR, f"ckpt_{scenario_name}_{safe_label}.pt")
+
+
 def run_hyperparameter_search(scenario_name, t1_train, t1_val, t1_test,
                                t2_train, t2_val, t2_test,
                                input_dim, output_dim,
                                trials_per_condition=TRIALS_PER_CONDITION):
-    """25 random trials × 8 conditions = 200 models (paper §3.3)."""
     all_results, trial_summaries, winning_models = {}, {}, {}
 
     for activation in ACTIVATIONS:
         for use_dropout in DROPOUT_FLAGS:
             label = f"{activation}_{'Dropout' if use_dropout else 'SGD'}"
+
+            # ── בדיקה: האם ה-condition הזה כבר הסתיים בהרצה קודמת? ──────────
+            ckpt_path = _condition_ckpt_path(scenario_name, label)
+            if os.path.exists(ckpt_path):
+                print(f"  ✅ Skipping {label} — loaded from checkpoint", flush=True)
+                saved = torch.load(ckpt_path, weights_only=False)
+                all_results[label]     = saved["results"]
+                trial_summaries[label] = saved["trial_summaries"]
+                winning_models[label]  = saved["winning_model"]
+                continue
+
             print(f"\n[{scenario_name}] {label}", flush=True)
             rng = random.Random(SEED)
             best_joint_global, best_param_count = float("inf"), 0
@@ -446,6 +412,14 @@ def run_hyperparameter_search(scenario_name, t1_train, t1_val, t1_test,
             trial_summaries[label] = trials
             winning_models[label]  = best_param_count
 
+            # ── שמור checkpoint של ה-condition הזה מיד כשמסיים ───────────────
+            torch.save({
+                "results":        all_results[label],
+                "trial_summaries": trial_summaries[label],
+                "winning_model":  winning_models[label],
+            }, ckpt_path)
+            print(f"  💾 Checkpoint saved: {ckpt_path}", flush=True)
+
     return {"scenario_name": scenario_name, "results": all_results,
             "trial_summaries": trial_summaries, "winning_models": winning_models}
 
@@ -466,12 +440,7 @@ STYLE_MAP = {
 }
 
 
-def pareto_lower_left(points: np.ndarray) -> np.ndarray:
-    """
-    Lower-left Pareto frontier in log-space.
-    Matches the paper's "possibilities frontier" (§4):
-    'the lower left frontier of the cloud of points'.
-    """
+def pareto_lower_left(points) -> np.ndarray:
     pts = np.array(points, dtype=float)
     pts = pts[np.isfinite(pts).all(axis=1) & (pts[:, 0] > 0) & (pts[:, 1] > 0)]
     if len(pts) == 0:
@@ -488,7 +457,6 @@ def pareto_lower_left(points: np.ndarray) -> np.ndarray:
 
 
 def plot_frontier(trial_summaries, title, save_path):
-    """Reproduce Figures 1, 3, 5: log-log possibilities-frontier curves."""
     fig, ax = plt.subplots(figsize=(10, 8))
     for label, trials in trial_summaries.items():
         all_pts  = [pt for t in trials for pt in t["points"]]
@@ -512,7 +480,6 @@ def plot_frontier(trial_summaries, title, save_path):
 
 
 def plot_model_sizes(winning_models, title, save_path):
-    """Reproduce Figures 2, 4, 6: grouped bar chart SGD vs Dropout."""
     x   = np.arange(len(ACTIVATIONS))
     w   = 0.35
     sgd = [winning_models.get(f"{a}_SGD",     0) for a in ACTIVATIONS]
@@ -549,7 +516,6 @@ def save_and_plot(ckpt, fig_num, frontier_title, size_title):
 # =============================================================================
 
 def run_scenario_1():
-    """§4.1 Input Reformatting – Permuted MNIST → differently permuted MNIST."""
     print("\n" + "=" * 60)
     print("SCENARIO 1 – Input Reformatting (Permuted MNIST)")
     print("=" * 60)
@@ -570,7 +536,6 @@ def run_scenario_1():
 
 
 def run_scenario_2_paper_pair():
-    """§4.2 Similar Tasks – Amazon Kitchen (old) → Amazon DVD (new)."""
     print("\n" + "=" * 60)
     print("SCENARIO 2 – Similar Tasks (Amazon Kitchen → DVD)")
     print("=" * 60)
@@ -588,14 +553,13 @@ def run_scenario_2_paper_pair():
 
 
 def run_scenario_3():
-    """§4.3 Dissimilar Tasks – MNIST(2,9) → Amazon DVD."""
     print("\n" + "=" * 60)
     print("SCENARIO 3 – Dissimilar Tasks (MNIST 2/9 → Amazon DVD)")
     print("=" * 60)
     target_dim = 784
     base = os.path.join("data", "amazon")
     a_tr, a_va, a_te, _, amazon_cls = get_amazon_from_npz(os.path.join(base, "dvd.npz"))
-    assert amazon_cls == 2, "Expects binary Amazon task."
+    assert amazon_cls == 2
     a_tr, a_va, a_te = reduce_feature_dim(a_tr, a_va, a_te, target_dim=target_dim)
     m_tr, m_va, m_te = get_padded_binary_mnist_loaders(target_dim=target_dim, classes=(2, 9))
     ckpt = run_hyperparameter_search(
@@ -616,12 +580,7 @@ if __name__ == "__main__":
     print(f"Trials/condition  : {TRIALS_PER_CONDITION}")
     print(f"Patience Task 1/2 : {PATIENCE_OLD} / {PATIENCE_NEW} epochs")
     print(f"Output dir        : {RESULTS_DIR}\n")
-
-    if RUN_SCENARIO_1:
-        run_scenario_1()
-    if RUN_SCENARIO_2_PAPER_PAIR:
-        run_scenario_2_paper_pair()
-    if RUN_SCENARIO_3:
-        run_scenario_3()
-
+    run_scenario_1()
+    run_scenario_2_paper_pair()
+    run_scenario_3()
     print("\nDone. All figures saved to", RESULTS_DIR)
