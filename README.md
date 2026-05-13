@@ -16,7 +16,7 @@
 המאגר מאורגן בצורה המאפשרת ביקורת עמיתים ובדיקה מודולרית:
 
 *   **עיבוד נתונים: `prepare_amazon_npz.py`** – הכנה ופורמט של מערך הנתונים (Amazon Reviews) עבור תרחישי למידה מתמשכת.
-*   **מנוע שחזור: `pytorch_reproduction_suite.py`** – מימוש לוגיקת האימון ואסטרטגיות לצמצום שכחה, תוך התמקדות באלגוריתם ה-Dropout.
+*   **מנוע שחזור: `final_experiment_repro.py`** – מימוש לוגיקת האימון ואסטרטגיות לצמצום שכחה, תוך התמקדות באלגוריתם ה-Dropout.
 *   **ויזואליזציה: `plot_results.py`** – הפקת גרפים השוואתיים המבוססים על לוגים מהניסויים.
 
 ## ⚙️ מערך ניסוי מבוקר
@@ -41,7 +41,7 @@
 python prepare_amazon_npz.py
 
 # שלב 2: הרצת מנוע האימון והשחזור
-python pytorch_reproduction_suite.py
+python final_experiment_repro.py
 
 # שלב 3: הפקת גרפים השוואתיים
 python plot_results.py
@@ -51,13 +51,9 @@ python plot_results.py
 
 ההרצה מייצרת לוגים וגרפים שנועדו להתכתב עם המגמות העיקריות שנצפו במחקר המקורי:
 
-*   **לוגים של נתונים:** נשמרים בתיקיית `results_fixed/*.csv`.
 *   **ויזואליזציות:**
-    *   `figure1.png`: תוצאות עיצוב מחדש של קלט (Input Reformatting - MNIST Permutation).
-    *   `figure2.png`: משימות דומות (Similar Tasks - Amazon Reviews).
-    *   `figure3.png`: משימות שונות (Dissimilar Tasks - MNIST & Amazon).
+    *   `fig_s1_frontier.png`: תוצאות עיצוב מחדש של קלט (Input Reformatting - MNIST Permutation).
+    *   `fig_s2_frontier.png`: משימות דומות (Similar Tasks - Amazon Reviews).
+    *   `fig_s3_frontier.png`: משימות שונות (Dissimilar Tasks - MNIST & Amazon).
 
 תוצרים אלו מדגימים את ה-Trade-off בין גמישות בלמידת משימה חדשה לבין יציבות הזיכרון, תוך הדגשת היעילות של Dropout בצמצום אובדן המידע.
-
----
-> ✅ *Edited by Claude on 2026-05-13 — just proving I can access and modify this repo!*
