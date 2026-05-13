@@ -58,3 +58,6 @@ python plot_results.py
     *   `figure3.png`: משימות שונות (Dissimilar Tasks - MNIST & Amazon).
 
 תוצרים אלו מדגימים את ה-Trade-off בין גמישות בלמידת משימה חדשה לבין יציבות הזיכרון, תוך הדגשת היעילות של Dropout בצמצום אובדן המידע.
+
+---
+> ✅ *Edited by Claude on 2026-05-13 — just proving I can access and modify this repo!*
