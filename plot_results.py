@@ -7,6 +7,16 @@ import torch
 
 RESULTS_DIR = "results_fixed"
 
+# Mapping from logical scenario number (1,2,3) to the filename suffix used
+# by final_experiment_repro.py's save_and_plot() calls.
+# Note: run_scenario_2 calls save_and_plot with fig_num=3, and
+#       run_scenario_3 calls it with fig_num=5 — so we mirror that here.
+SCENARIO_FILE_NUM = {
+    1: 1,
+    2: 3,
+    3: 5,
+}
+
 # A lookup table that decides what colors and labels to use when drawing lines on our graphs.
 STYLE_MAP = {
     "Sigmoid_SGD": {"color": "blue", "label": "SGD Sigmoid"},
@@ -36,10 +46,10 @@ def get_lower_convex_hull(points: np.ndarray) -> np.ndarray:
             p1 = lower[-2]
             p2 = lower[-1]
             p3 = p
-            
+
             # חישוב מכפלה וקטורית כדי לוודא שאנחנו יוצרים קמור תחתון (פניות שמאלה בלבד)
             cross = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
-            
+
             if cross <= 0:
                 lower.pop()
             else:
@@ -165,14 +175,14 @@ if __name__ == "__main__":
     }
 
     for i in [1, 2, 3]:
-        ckpt_path = os.path.join(RESULTS_DIR, f"scenario_{i}_checkpoint.pt")
+        file_num = SCENARIO_FILE_NUM[i]
+        ckpt_path = os.path.join(RESULTS_DIR, f"scenario_{file_num}_repro.pt")
         if not os.path.exists(ckpt_path):
-            print(f"Skipping {ckpt_path} (not found)")
+            print(f"Skipping scenario {i} — checkpoint not found: {ckpt_path}")
             continue
 
         data = torch.load(ckpt_path, weights_only=False)
 
-        # קריאה לפונקציה המעודכנת שמציירת את הגרפים הלוגריתמיים
         plot_frontier_from_all_trials(
             data["trial_summaries"],
             scenario_titles[i],
