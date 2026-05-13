@@ -162,11 +162,11 @@ final_experiment_repro.py
   ├── Scenario 2: Amazon Kitchen → Amazon DVD
   └── Scenario 3: MNIST (2/9) → Amazon DVD
         ↓
-  [results_fixed/*.csv, checkpoints]
+  [results_fixed/*.pt, ckpt_*.pt]
         ↓
 plot_results.py
         ↓
-  [figure1.png, figure2.png, figure3.png]
+  [fig_s1_frontier.png, fig_s2_frontier.png, fig_s3_frontier.png]
 ```
 
 כל שלב בזרימה תלוי בתוצאות השלב הקודם, ולכן הסדר חשוב להרצה תקינה.
