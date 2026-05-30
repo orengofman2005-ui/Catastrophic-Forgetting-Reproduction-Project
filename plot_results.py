@@ -76,6 +76,13 @@ def get_frontier_points(trial_summaries: Dict[str, List[dict]]) -> Dict[str, np.
 
 # This function creates a visual graph (a scatter plot with connecting lines).
 # It shows us how many mistakes the model made on the old task versus the new task.
+# Axis limits per scenario to prevent overcrowding (especially Scenario 2 / Amazon)
+AXIS_LIMITS = {
+    1: dict(xlim=None, ylim=None),
+    3: dict(xlim=(0.08, 0.7), ylim=(0.1, 0.6)),
+    5: dict(xlim=None, ylim=None),
+}
+
 def plot_frontier_from_all_trials(
     trial_summaries: Dict[str, List[dict]],
     title: str,
@@ -104,11 +111,16 @@ def plot_frontier_from_all_trials(
     ax.set_ylabel("New Task Classification Error", fontsize=13)
     ax.set_title(title, fontsize=18, pad=16)
 
-    # מעבר לסקאלה לוגריתמית כמו במאמר
     ax.set_xscale('log')
     ax.set_yscale('log')
 
-    ax.grid(True, which="both", linestyle="--", alpha=0.4)
+    limits = AXIS_LIMITS.get(scenario_num, dict(xlim=None, ylim=None))
+    if limits["xlim"]:
+        ax.set_xlim(limits["xlim"])
+    if limits["ylim"]:
+        ax.set_ylim(limits["ylim"])
+
+    ax.grid(True, which="both", linestyle="--", alpha=0.5)
     ax.tick_params(axis="both", labelsize=11)
     ax.margins(0.1)
 
@@ -180,9 +192,10 @@ if __name__ == "__main__":
             scenario_num=i,
         )
 
+        label_num = {1: 1, 3: 2, 5: 3}[i]
         plot_winning_model_sizes(
             data["winning_models"],
-            f"Scenario {i}: Parameter Count of Winning Models",
+            f"Scenario {label_num}: Parameter Count of Winning Models",
             os.path.join(RESULTS_DIR, f"fig_s{i}_params.png"),
         )
 
