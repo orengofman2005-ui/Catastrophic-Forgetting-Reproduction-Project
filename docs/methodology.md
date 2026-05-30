@@ -6,9 +6,9 @@
 
 1. **אימון על משימה ישנה** — עד להתכנסות (early stopping על validation set)
 2. **אימון על משימה חדשה** — תוך מדידת שני מדדים במקביל:
-   - שגיאה על המשימה החדשה (ציר Y)
-   - שגיאה על המשימה הישנה (ציר X)
-3. **ציור עקומת Possibilities Frontier** — הגבול התחתון של ענן הנקודות (lower convex hull), בסקאלה לוגריתמית
+   - שגיאת המשימה החדשה (ציר Y)
+   - שגיאת המשימה הישנה (ציר X)
+3. **ציור עקומת Possibilities Frontier** — הגבול התחתון (lower convex hull) של ענן הנקודות, בסקאלה לוגריתמית
 
 ## 8 תנאים (Conditions)
 
@@ -25,38 +25,43 @@
 
 ## ארכיטקטורת המודל
 
-- **שכבות:** 2 שכבות hidden + softmax classification layer
-- **Maxout:** pool size $k=2$ (כל יחידת פלט היא מקסימום על 2 קלטים)
-- **LWTA:** group size $k=2$ (בכל זוג יחידות, רק הגדולה מקבלת גרדיאנט)
-- **Max-norm constraint:** מגבלה דינמית לכל שכבה בטווח 1.0–5.0, נדגמת בנפרד עבור `fc1`, `fc2`, `fc_out` בכל ניסוי
+- **שכבות:** 2 שכבות hidden + שכבת softmax לסיווג
+- **Maxout:** pool size k=2 (כל יחידת פלט היא מקסימום על 2 קלטים)
+- **LWTA:** group size k=2 (בכל זוג יחידות, רק הגדולה מקבלת גרדיאנט)
+- **Max-norm constraint:** מגבלה דינמית לכל שכבה בטווח 1.0–5.0, נדגמת בנפרד עבור fc1, fc2, fc_out בכל ניסוי
 - **Dropout:** הסתברות dropout_hidden=0.5, dropout_input=0.2 (קבועים, לא חלק מחיפוש)
 
 ## חיפוש היפר-פרמטרים
 
-חיפוש אקראי (random search) — 8 ניסיונות לכל condition (המאמר: 25):
+חיפוש אקראי (random search) — 8 ניסיונות לכל תנאי (המאמר: 25):
 
 | פרמטר | טווח חיפוש |
 |---|---|
-| Learning rate | `10^U[-2.0, -0.5]` |
-| Hidden layer size | `U[250, 5000]` |
-| Max-norm (כל שכבה) | `U[1.0, 5.0]` |
-| Weight init range (irange) | `10^U[-2.3, -1.0]` |
-| Sparse init k (Sigmoid/ReLU) | `U[10, 30]` |
-| Momentum | עולה ליניארית מ-0.5 |
+| קצב למידה | 10^U[-2.0, -0.5] |
+| גודל שכבה נסתרת | U[250, 5000] |
+| Max-norm (כל שכבה) | U[1.0, 5.0] |
+| טווח אתחול משקולות | 10^U[-2.3, -1.0] |
+| Sparse init k (Sigmoid/ReLU) | U[10, 30] |
+| מומנטום | עולה ליניארית מ-0.5 |
 
-> Maxout ו-LWTA: bias מאותחל ל-0 (אתחול רנדומי של bias גורם לדומיננטיות של יחידה אחת בקבוצה).
+> Maxout ו-LWTA: bias מאותחל ל-0 (אתחול רנדומי גורם לדומיננטיות של יחידה אחת בקבוצה).
 > Sigmoid: bias מאותחל מטווח שלילי לעידוד sparsity.
 > ReLU: bias חיובי קל למניעת יחידות "מתות".
 
 ## סטיות מהמאמר המקורי
 
-| פרמטר | מאמר | כאן | סיבה |
+| פרמטר | מאמר | שחזור זה | השפעה על תקפות |
 |---|---|---|---|
-| Trials per condition | 25 | 8 | חומרה ביתית |
-| Early-stopping patience | 100 epochs | 15 epochs | חומרה ביתית |
-| Framework | Theano / Pylearn2 | PyTorch | Theano deprecated |
-| Batch size | 128 | 256 | GPU utilization |
+| ניסיונות לתנאי | 25 | 8 | גבוהה — כיסוי HP space חלקי |
+| Early-stopping patience | 100 epochs | 15 epochs | גבוהה — ראו הערה על Patience Bias |
+| Framework | Theano / Pylearn2 | PyTorch | בינונית — הבדלי numerical precision |
+| Batch size | 128 | 256 | בינונית — gradient noise שונה |
+| Seed | לא מוגדר | 42 בלבד | גבוהה — אין אמידת שונות |
+
+## הערה על Patience Bias
+
+סטייה קריטית שיש להדגיש: הקטנת ה-patience מ-100 ל-15 epochs אינה ניטרלית — היא יוצרת **הטיה שיטתית כנגד Dropout**. שיטות Dropout מתכנסות לרוב לאט יותר מ-SGD (בשל הנויז שמכניס מנגנון ה-dropout לגרדיאנטים). כתוצאה, patience קצר נותן יתרון יחסי ל-SGD ועלול לדכא את העדיפות הנראית של Dropout. המשמעות: הממצאים על עליונות Dropout בשחזור זה הם **שמרניים** — בתנאי patience מלא (100 epochs), הפרש הביצועים צפוי להיות גדול יותר, לא קטן יותר.
 
 ## Checkpoint ו-Resume
 
-הסקריפט שומר checkpoint אחרי כל condition. אם הריצה נקטעת — היא ממשיכה אוטומטית מהמקום האחרון שנשמר.
+הסקריפט שומר checkpoint אחרי כל תנאי. אם הריצה נקטעת — היא ממשיכה אוטומטית מהמקום האחרון שנשמר.
