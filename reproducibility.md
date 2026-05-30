@@ -9,7 +9,7 @@ This file documents the exact hardware and software environment used to produce 
 | Component | Specification |
 |---|---|
 | GPU | NVIDIA GeForce GTX 1660 Super (6 GB VRAM) |
-| CPU | Intel Core i7-10700 (8 cores, 16 threads) |
+| CPU | Intel Core i5-10400F (6 cores, 12 threads, 2.90 GHz) |
 | RAM | 16 GB DDR4 |
 | Storage | SSD (NVMe) — required for fast data loading |
 | OS | Windows 11 (64-bit) |
