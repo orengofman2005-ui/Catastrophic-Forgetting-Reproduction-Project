@@ -1,22 +1,22 @@
-# מסקנות
+# Conclusion
 
-## תשובה לשאלת המחקר
+## Answer to the Research Question
 
-שאלת המחקר שנשאלה: *האם המסקנות המרכזיות של גודפלו et al. (2015) ניתנות לשחזור בסביבת PyTorch מודרנית תחת מגבלות חישוב של חומרה ביתית?*
+The research question posed: *Can the central conclusions of Goodfellow et al. (2015) be reproduced in a modern PyTorch environment under consumer hardware constraints?*
 
-**התשובה: כן, במידה רבה — עם סייגים חשובים.**
+**The answer: Yes, to a large extent — with important caveats.**
 
-| השערה | תוצאה | ראיות |
+| Hypothesis | Result | Evidence |
 |---|---|---|
-| Dropout עדיף על SGD בכל התרחישים | עקבי עם המאמר | best_joint של Dropout נמוך מ-SGD ב-6 מתוך 8 תנאים בתרחיש 1 |
-| Maxout+Dropout על ה-Frontier בכל תרחיש | עקבי עם המאמר | best_joint: 0.039 / 0.316 / 0.171 בתרחישים 1/2/3 |
-| דירוג פונקציות אקטיבציה תלוי-תרחיש | עקבי עם המאמר | LWTA מוביל ב-best_new בתרחיש 3 אך נכשל בתרחיש 2 |
+| Dropout superior to SGD in all scenarios | Consistent with the paper | Dropout best_joint lower than SGD in 6 out of 8 conditions in Scenario 1 |
+| Maxout+Dropout on Frontier in every scenario | Consistent with the paper | best_joint: 0.039 / 0.316 / 0.171 in Scenarios 1/2/3 |
+| Activation function ranking is scenario-dependent | Consistent with the paper | LWTA leads on best_new in Scenario 3 but fails in Scenario 2 |
 
 ---
 
-## טבלת השוואה כמותית — Best Joint Error (↓ ערך נמוך יותר = ביצועים טובים יותר)
+## Quantitative Comparison Table — Best Joint Error (lower is better)
 
-| תנאי | תרחיש 1 | תרחיש 2 | תרחיש 3 |
+| Condition | Scenario 1 | Scenario 2 | Scenario 3 |
 |---|---|---|---|
 | Sigmoid + SGD | 0.173 | 0.813 | 0.201 |
 | Sigmoid + Dropout | 0.203 | 0.869 | 0.259 |
@@ -27,40 +27,40 @@
 | LWTA + SGD | 0.108 | 0.356 | 0.196 |
 | LWTA + Dropout | 0.045 | 0.347 | 0.176 |
 
-> ערכים אלו הם תוצאות שחזור זה בלבד. המאמר המקורי הציג תוצאות גרפית בלבד ללא ערכים מספריים מפורשים.
+> These values are from this reproduction only. The original paper presented results graphically without explicit numerical values.
 
 ---
 
-## ממצאים מרכזיים
+## Key Findings
 
-**1. Dropout:** עקומות Frontier עדיפות על SGD בכל שלושת התרחישים. ההפרש קטן יחסית (למשל 0.039 מול 0.042 בתרחיש 1), ויש לזכור שבשל Patience Bias (ראו מתודולוגיה), ההפרש האמיתי עשוי להיות גדול יותר. ממצא זה עקבי עם טענת המאמר המקורי.
+**1. Dropout:** Superior Frontier curves over SGD in all three scenarios. The gap is relatively small (e.g. 0.039 vs. 0.042 in Scenario 1), and it should be noted that due to Patience Bias (see Methodology), the true gap is likely larger. This finding is consistent with the original paper's claim.
 
-**2. Maxout:** התנאי היחיד המופיע על ה-Frontier בכל שלושת התרחישים — עקבי עם המאמר המקורי.
+**2. Maxout:** The only condition appearing on the Frontier in all three scenarios — consistent with the original paper.
 
-**3. Sigmoid:** מציג ביצועים נמוכים באופן עקבי בכל התרחישים (best_joint: 0.173–0.813).
+**3. Sigmoid:** Consistently poor performance across all scenarios (best_joint: 0.173–0.813).
 
-**4. LWTA — אנומליה בתרחיש 3:** מוקצה קיבולת גבוהה (Winning Model, Fig6), אך ממצאי Fig5 עקביים עם הטענה שקיבולת לבדה אינה מנגנון הגנה כאשר המשימות שונות סמנטית.
-
----
-
-## מגבלות וסייגים
-
-**1. כיסוי HP space מוגבל:** 8 ניסיונות מתוך 25 = 32% כיסוי. ה-Frontier שהתקבל עשוי להיות פסימיסטי — ייתכן שנקודות טובות יותר קיימות ב-HP space שלא נדגם.
-
-**2. Seed יחיד:** כל הניסויים בוצעו עם seed=42 אחד. אין confidence intervals ואין אמידת שונות. תוצאות עשויות להשתנות עם seed שונה.
-
-**3. Patience Bias:** patience של 15 epochs (מול 100 במאמר) יוצר הטיה שיטתית — Dropout מתכנס לאט יותר מ-SGD, ולכן patience קצר מסייע ל-SGD יחסית. הממצאים על עליונות Dropout הם לפיכך **שמרניים**: בתנאי patience מלא, הפרש הביצועים צפוי להיות גדול יותר.
-
-**4. Amazon preprocessing:** אין ודאות מלאה שה-preprocessing של נתוני Amazon Reviews זהה לזה שבוצע ב-Glorot et al. (2011b) עליו מסתמך המאמר.
-
-**5. Numerical precision:** Theano ו-PyTorch עלולים להציג הבדלי דיוק נומרי בחישובי floating point, המשפיעים על תוצאות בשולי הדיוק.
+**4. LWTA — Scenario 3 anomaly:** Allocated high capacity (Winning Model, Fig6), yet Fig5 results are consistent with the claim that capacity alone is not a defense mechanism when tasks are semantically dissimilar.
 
 ---
 
-## המלצות למחקר עתידי
+## Limitations and Caveats
 
-- הרצת הניסוי עם מספר seeds ודיווח על ממוצע ± סטיית תקן
-- הגדלת מספר הניסיונות ל-25 כמו במאמר המקורי (על GPU ייעודי)
-- אימות preprocessing של Amazon אל מול Glorot et al. (2011b)
-- בדיקת sensitivity לגודל ה-patience (15 / 50 / 100 epochs)
-- השוואה עם שיטות Continual Learning מודרניות (EWC, Progressive Nets)
+**1. Limited HP space coverage:** 8 trials out of 25 = 32% coverage. The resulting Frontier may be pessimistic — better points may exist in the unsampled HP space.
+
+**2. Single seed:** All experiments were run with a single seed=42. No confidence intervals and no variance estimation. Results may differ with a different seed.
+
+**3. Patience Bias:** Patience of 15 epochs (vs. 100 in the paper) creates a systematic bias — Dropout converges more slowly than SGD, so short patience relatively benefits SGD. The findings on Dropout superiority are therefore **conservative**: under full patience, the performance gap is expected to be larger.
+
+**4. Amazon preprocessing:** There is no full certainty that the Amazon Reviews preprocessing matches that performed by Glorot et al. (2011b) on which the paper relies.
+
+**5. Numerical precision:** Theano and PyTorch may exhibit numerical precision differences in floating point computations, affecting results at the margins.
+
+---
+
+## Recommendations for Future Work
+
+- Run the experiment with multiple seeds and report mean +/- standard deviation
+- Increase the number of trials to 25 as in the original paper (on a dedicated GPU)
+- Validate Amazon preprocessing against Glorot et al. (2011b)
+- Test sensitivity to patience size (15 / 50 / 100 epochs)
+- Compare with modern Continual Learning methods (EWC, Progressive Nets)

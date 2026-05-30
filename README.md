@@ -1,108 +1,108 @@
-# שכחה קטסטרופלית — שחזור בסביבת PyTorch
+# Catastrophic Forgetting — PyTorch Reproduction
 
-שחזור של:
+Reproduction of:
 > **"An Empirical Investigation of Catastrophic Forgetting in Gradient-Based Neural Networks"**
 > Goodfellow, Mirza, Xiao, Courville, Bengio — arXiv:1312.6211, 2015
 
 ---
 
-## שאלת המחקר
+## Research Question
 
-> *האם המסקנות המרכזיות של גודפלו et al. (2015) — עליונות ה-Dropout על פני SGD במניעת שכחה קטסטרופלית, ותלות דירוג פונקציות האקטיבציה בסוג המשימה — ניתנות לשחזור בסביבת PyTorch מודרנית, תחת מגבלות חישוב של חומרה ביתית (8 ניסיונות במקום 25)?*
+> *Can the central conclusions of Goodfellow et al. (2015) — the superiority of Dropout over SGD in preventing catastrophic forgetting, and the scenario-dependent ranking of activation functions — be reproduced in a modern PyTorch environment under consumer hardware constraints (8 trials instead of 25)?*
 
 ---
 
-## ניווט מהיר
+## Quick Navigation
 
-| מסמך | תוכן |
+| Document | Contents |
 |---|---|
-| [מבוא ושאלת המחקר](docs/introduction.md) | רקע, השערות, הגדרות מרכזיות, עבודות קשורות |
-| [מתודולוגיה](docs/methodology.md) | מבנה הניסוי, חיפוש היפר-פרמטרים, סטיות מהמאמר |
-| [תוצאות](docs/results.md) | כל 6 הגרפים עם ניתוח לכל תרחיש |
-| [מסקנות](docs/conclusion.md) | טבלת השוואה כמותית, תשובה לשאלת המחקר, מגבלות |
-| [תובנות](takeaways.md) | ניתוח לכל תרחיש ורפלקציה |
+| [Introduction & Research Question](docs/introduction.md) | Background, hypotheses, key definitions, related work |
+| [Methodology](docs/methodology.md) | Experiment design, hyperparameter search, deviations from the paper |
+| [Results](docs/results.md) | All 6 figures with per-scenario analysis |
+| [Conclusion](docs/conclusion.md) | Quantitative comparison table, answer to research question, limitations |
+| [Takeaways](takeaways.md) | Per-scenario analysis and reflection |
 
 ---
 
-## מה משוחזר
+## What Is Reproduced
 
-המאמר מאמן רשתות MLP דו-שכבתיות על זוגות משימות ברצף ומודד את האיזון בין ביצועים על המשימה הישנה לעומת החדשה. שוחזרו שלושת התרחישים המקוריים:
+The paper trains two-layer MLP networks on pairs of tasks sequentially and measures the trade-off between performance on the old task versus the new task. Three original scenarios are reproduced:
 
-| תרחיש | משימה ישנה | משימה חדשה | איורים במאמר |
+| Scenario | Old Task | New Task | Paper Figures |
 |---|---|---|---|
-| 1 — עיצוב קלט מחדש | MNIST | MNIST עם Permutation | Fig 1–2 |
-| 2 — משימות דומות | ביקורות Amazon Kitchen | ביקורות Amazon DVD | Fig 3–4 |
-| 3 — משימות שונות | MNIST (ספרות 2 ו-9) | ביקורות Amazon DVD | Fig 5–6 |
+| 1 — Input Reformatting | MNIST | Permuted MNIST | Fig 1–2 |
+| 2 — Similar Tasks | Amazon Kitchen reviews | Amazon DVD reviews | Fig 3–4 |
+| 3 — Dissimilar Tasks | MNIST (digits 2 and 9) | Amazon DVD reviews | Fig 5–6 |
 
-כל תרחיש כולל **8 תנאים** (4 פונקציות אקטיבציה × SGD / Dropout):
-Sigmoid, ReLU, Maxout, LWTA — כל אחת עם ובלי Dropout.
+Each scenario includes **8 conditions** (4 activation functions × SGD / Dropout):
+Sigmoid, ReLU, Maxout, LWTA — each with and without Dropout.
 
 ---
 
-## הגרפים המשוחזרים
+## Reproduced Figures
 
-הקו המקווקו האפור בכל גרף Frontier מסמן את חציון שגיאת המשימה הישנה בתחילת האימון על המשימה החדשה — נקודת הייחוס לפני השכחה.
+The gray dashed vertical line in each Frontier plot marks the median old-task error at the start of new-task training — the pre-forgetting reference point.
 
-| Fig 1 — Frontier, עיצוב קלט מחדש | Fig 2 — גודל מודלים |
+| Fig 1 — Frontier, Input Reformatting | Fig 2 — Model Sizes |
 |---|---|
 | ![](paper_figures/Fig1_frontier_input_reformatting.png) | ![](paper_figures/Fig2_model_sizes_input_reformatting.png) |
 
-| Fig 3 — Frontier, משימות דומות | Fig 4 — גודל מודלים |
+| Fig 3 — Frontier, Similar Tasks | Fig 4 — Model Sizes |
 |---|---|
 | ![](paper_figures/Fig3_frontier_similar_tasks.png) | ![](paper_figures/Fig4_model_sizes_similar_tasks.png) |
 
-| Fig 5 — Frontier, משימות שונות | Fig 6 — גודל מודלים |
+| Fig 5 — Frontier, Dissimilar Tasks | Fig 6 — Model Sizes |
 |---|---|
 | ![](paper_figures/Fig5_frontier_dissimilar_tasks.png) | ![](paper_figures/Fig6_model_sizes_dissimilar_tasks.png) |
 
 ---
 
-## מבנה המאגר
+## Repository Structure
 
 ```
-final_experiment_repro.py   # ניסוי ראשי — כל 3 התרחישים
-plot_results.py             # יצירת גרפי Frontier וגודל מודלים
-prepare_amazon_npz.py       # עיבוד מקדים של נתוני Amazon → .npz
-requirements.txt            # תלויות (Python 3.11)
-takeaways.md                # ניתוח תרחישים ורפלקציה
+final_experiment_repro.py   # main experiment — all 3 scenarios
+plot_results.py             # generates Frontier and model-size figures
+prepare_amazon_npz.py       # preprocesses Amazon data -> .npz
+requirements.txt            # dependencies (Python 3.11)
+takeaways.md                # per-scenario analysis and reflection
 docs/
-  introduction.md           # שאלת מחקר, רקע, השערות, עבודות קשורות
-  methodology.md            # עיצוב ניסויי וסטיות מהמאמר
-  results.md                # תוצאות מפורטות עם כל 6 הגרפים
-  conclusion.md             # טבלה כמותית, מסקנות, מגבלות
-paper_figures/              # גרפים סופיים בשמות תואמי המאמר (Fig1–Fig6)
-results_repro/              # checkpoints וגרפים מהריצה
+  introduction.md           # research question, background, hypotheses, related work
+  methodology.md            # experimental design and deviations from the paper
+  results.md                # detailed results with all 6 figures
+  conclusion.md             # quantitative table, conclusions, limitations
+paper_figures/              # final figures named to match the paper (Fig1–Fig6)
+results_repro/              # checkpoints and figures from the run
 ```
 
 ---
 
-## הוראות הרצה
+## Running the Code
 
-**דרישות:** Python 3.11, CUDA 11.8+ (אופציונלי). זמן ריצה משוער: 6–12 שעות על GPU ביתי (RTX 3060 ומעלה), 24–48 שעות על CPU בלבד.
+**Requirements:** Python 3.11, CUDA 11.8+ (optional). Estimated runtime: 6–12 hours on a consumer GPU (RTX 3060 or better), 24–48 hours on CPU only.
 
 ```bash
-# 1 — התקנת תלויות
+# 1 — Install dependencies
 pip install -r requirements.txt
 
-# 2 — הכנת נתוני Amazon (פעם אחת בלבד)
-#     הורדה מ: https://www.cs.jhu.edu/~mdredze/datasets/sentiment/
-#     מיקום: data/amazon/{books,dvd,electronics,kitchen}/
+# 2 — Prepare Amazon data (once only)
+#     Download from: https://www.cs.jhu.edu/~mdredze/datasets/sentiment/
+#     Place in: data/amazon/{books,dvd,electronics,kitchen}/
 python prepare_amazon_npz.py
 
-# 3 — הרצת הניסויים (שמירת checkpoint אוטומטית, המשך מנקודת עצירה)
+# 3 — Run experiments (automatic checkpoint saving, resumes from last stop)
 python final_experiment_repro.py
 
-# 4 — יצירת גרפים
+# 4 — Generate figures
 python plot_results.py
 ```
 
-נתוני MNIST מורדים אוטומטית בהרצה הראשונה.
+MNIST data is downloaded automatically on the first run.
 
 ---
 
-## ממצאים מרכזיים
+## Key Findings
 
-- **Dropout מציג עקומות Frontier עדיפות** על SGD בכל 3 התרחישים — best_joint נמוך יותר ב-6 מתוך 8 תנאים בתרחיש 1.
-- **Maxout + Dropout** הוא התנאי היחיד המופיע על ה-Frontier בכל שלושת התרחישים — עקבי עם טענת המאמר המקורי.
-- **דירוג פונקציות האקטיבציה תלוי-תרחיש** — אין מנצח אוניברסלי; cross-validation הכרחי.
-- לפרטים כמותיים מלאים ראו [מסקנות](docs/conclusion.md).
+- **Dropout shows superior Frontier curves** over SGD in all 3 scenarios — lower best_joint in 6 out of 8 conditions in Scenario 1.
+- **Maxout + Dropout** is the only condition appearing on the Frontier in all three scenarios — consistent with the original paper's claim.
+- **Activation function ranking is scenario-dependent** — there is no universal winner; cross-validation is essential.
+- For full quantitative details see [Conclusion](docs/conclusion.md).

@@ -1,64 +1,64 @@
-# תובנות מהפרויקט — Catastrophic Forgetting
+# Project Takeaways — Catastrophic Forgetting
 
-## סיכום ממצאים
+## Summary of Findings
 
-פרויקט זה שחזר את הניסויים המרכזיים של גודפלו et al. (2015) בנושא שכחה קטסטרופלית ברשתות נוירונים. השחזור כלל שלושה תרחישים של למידה סדרתית, תוך השוואת 8 שיטות אימון המשלבות 4 פונקציות אקטיבציה עם שני אלגוריתמים — SGD ו-Dropout.
+This project reproduced the central experiments of Goodfellow et al. (2015) on catastrophic forgetting in neural networks. The reproduction covered three sequential learning scenarios, comparing 8 training methods that combine 4 activation functions with two algorithms — SGD and Dropout.
 
-## תובנה 1: תפקיד דואלי של Dropout
+## Takeaway 1: The Dual Role of Dropout
 
-הממצאים עקביים עם הטענה כי לטכניקת ה-Dropout תפקיד דואלי: הן כרגולריזטור למניעת Overfitting והן כמנגנון להפחתת הנטייה לשכחה קטסטרופלית. בכל שלושת התרחישים, שיטות המבוססות על Dropout הציגו עקומות Frontier הקרובות יותר לראשית הצירים בהשוואה ל-SGD. כך למשל, ב-Scenario 1, best_joint של Maxout_Dropout (0.039) נמוך מזה של Maxout_SGD (0.042), עקבי עם השערת המאמר לפיה Dropout מאפשר אימון רשתות בעלות קיבולת גבוהה יותר, החסינות יותר לשכחה.
+The findings are consistent with the claim that Dropout plays a dual role: both as a regularizer preventing overfitting and as a mechanism for reducing the tendency toward catastrophic forgetting. In all three scenarios, Dropout-based methods produced Frontier curves closer to the origin compared to SGD. For example, in Scenario 1, the best_joint of Maxout_Dropout (0.039) is lower than that of Maxout_SGD (0.042), consistent with the paper's hypothesis that Dropout enables training of higher-capacity networks that are more resistant to forgetting.
 
-## תובנה 2: תלות תרחיש בבחירת פונקציית האקטיבציה
+## Takeaway 2: Scenario-Dependent Activation Function Ranking
 
-דירוג פונקציות האקטיבציה אינו אוניברסלי ומשתנה בין תרחישים — ממצא עקבי עם המאמר המקורי. בתרחיש 1 (Input Reformatting), Maxout מציג יתרון מובהק (best_joint=0.039) על פני Sigmoid (0.173). בתרחיש 3 (Dissimilar Tasks), ההפרשים בין השיטות מצטמצמים משמעותית (טווח 0.170–0.259), מה שמעיד על קושי אחיד של כל השיטות בהתמודדות עם זוג משימות שונות סמנטית. ממצא זה מחזק את ההמלצה לבצע cross-validation על בחירת פונקציית האקטיבציה בכל קשת של משימות.
+The ranking of activation functions is not universal and varies across scenarios — a finding consistent with the original paper. In Scenario 1 (Input Reformatting), Maxout shows a clear advantage (best_joint=0.039) over Sigmoid (0.173). In Scenario 3 (Dissimilar Tasks), the gaps between methods narrow significantly (range 0.170–0.259), indicating uniform difficulty for all methods when dealing with semantically different task pairs. This finding reinforces the recommendation to cross-validate the choice of activation function for each task pair.
 
-## תובנה 3: ניתוח תרחיש 2 — Similar Tasks (Amazon Kitchen → DVD)
+## Takeaway 3: Scenario 2 Analysis — Similar Tasks (Amazon Kitchen -> DVD)
 
-תרחיש 2 מציג את האתגר הקשה ביותר ב-frontier, עם ערכי שגיאה גבוהים משמעותית מתרחיש 1 (best_joint הטוב ביותר: 0.309 של ReLU_Dropout, לעומת 0.039 בתרחיש 1). ניתן לייחס זאת לאופי הנתונים: Amazon Reviews הם ייצוגים דלילים בממד גבוה, המשפיעים על יכולת ההכללה של רשתות MLP קטנות.
+Scenario 2 presents the hardest challenge on the frontier, with error values significantly higher than Scenario 1 (best best_joint: 0.309 for ReLU_Dropout, vs. 0.039 in Scenario 1). This can be attributed to the nature of the data: Amazon Reviews are high-dimensional sparse representations that affect the generalization ability of small MLPs.
 
-מעניין לציין שב-Scenario 2, ReLU_Dropout (best_joint=0.309) עקף את Maxout_Dropout (0.316), בניגוד לתרחיש 1. ממצא זה עקבי עם הטענה שאין "מנצח אוניברסלי" בין פונקציות האקטיבציה — הבחירה תלויה בדאטה ובאופי המשימות.
+Notably, in Scenario 2, ReLU_Dropout (best_joint=0.309) outperformed Maxout_Dropout (0.316), unlike Scenario 1. This finding is consistent with the claim that there is no "universal winner" among activation functions — the choice depends on the data and task characteristics.
 
-בנוסף, ב-Scenario 2 הדרגה בין SGD ל-Dropout קטנה יותר מבשני התרחישים האחרים (הפרש של ~0.016 ב-ReLU), דבר העשוי להעיד על כך שכאשר המשימות דומות סמנטית, גם SGD רגיל מצליח לנצל transfer learning חלקי.
+Additionally, in Scenario 2, the performance gap between SGD and Dropout is smaller than in the other two scenarios (a difference of ~0.016 for ReLU), which may indicate that when tasks are semantically similar, even plain SGD can exploit partial transfer learning.
 
-## תובנה 4: קיבולת מודל אינה מספיקה לבדה
+## Takeaway 4: Model Capacity Alone Is Not Enough
 
-בתרחיש 3, מודל ה-LWTA הוקצה עם קיבולת פרמטרים גבוהה במיוחד (ראה Fig6), אך ממצאי Fig5 עקביים עם הטענה שהגדלת קיבולת לבדה אינה מהווה מנגנון הגנה מספק מפני interference כאשר המשימות שונות לחלוטין מבחינה סמנטית. הממצא תומך בהשערה שהשוני הסמנטי בין המשימות הוא גורם מנבא חזק יותר לרמת השכחה מאשר גודל המודל.
+In Scenario 3, the LWTA model was allocated especially high parameter capacity (see Fig6), yet the results of Fig5 are consistent with the claim that increasing capacity alone is not a sufficient defense against interference when tasks are completely different semantically. This finding supports the hypothesis that semantic dissimilarity between tasks is a stronger predictor of forgetting severity than model size.
 
-## תובנה 5: רגישות השחזור לפרטי מימוש
+## Takeaway 5: Sensitivity of Reproduction to Implementation Details
 
-תהליך השחזור חשף כי תוצאות ניסויים בתחום למידת מכונה רגישות ביותר להחלטות מימוש ספציפיות — אתחול משקולות, לוח זמנים של learning rate, וגודל ה-batch. הגעה למגמות איכותיות עקביות עם המאמר המקורי חייבה בדיקה חוזרת של hyperparameters ומספר iterations של ניפוי שגיאות.
+The reproduction process revealed that machine learning experiment results are highly sensitive to specific implementation decisions — weight initialization, learning rate schedule, and batch size. Achieving qualitative trends consistent with the original paper required revisiting hyperparameters and multiple rounds of debugging.
 
 ---
 
-## הגרפים המשוחזרים
+## Reproduced Figures
 
-### תרחיש 1 — Input Reformatting (MNIST → Permuted MNIST)
+### Scenario 1 — Input Reformatting (MNIST -> Permuted MNIST)
 
 ![Frontier S1](paper_figures/Fig1_frontier_input_reformatting.png)
 ![Sizes S1](paper_figures/Fig2_model_sizes_input_reformatting.png)
 
-Fig2 מדגים כי תחת תנאי Dropout, הארכיטקטורות שנבחרו כביצועיות ביותר הן בעלות קיבולת פרמטרים מורחבת — בפרט Maxout ו-LWTA. ממצא זה עקבי עם השערת המאמר לפיה Dropout מאפשר אימון רשתות רחבות החסינות יותר לשכחה, כפי שנראה בעקומות ה-Frontier הקרובות יותר לראשית ב-Fig1.
+Fig2 demonstrates that under Dropout conditions, the architectures selected as best-performing have significantly larger parameter capacity — particularly Maxout and LWTA. This finding is consistent with the paper's hypothesis that Dropout enables training of wider networks that have spare capacity to retain Task A representations while learning Task B, as reflected in the Frontier curves closer to the origin in Fig1.
 
 ---
 
-### תרחיש 2 — Similar Tasks (Amazon Kitchen → Amazon DVD)
+### Scenario 2 — Similar Tasks (Amazon Kitchen -> Amazon DVD)
 
 ![Frontier S2](paper_figures/Fig3_frontier_similar_tasks.png)
 ![Sizes S2](paper_figures/Fig4_model_sizes_similar_tasks.png)
 
-ב-Scenario 2, כל השיטות מציגות שגיאה גבוהה יחסית (טווח best_joint: 0.309–0.869), דבר המשקף את קושי מערך הנתונים. עם זאת, המגמה האיכותית נשמרת: ReLU_Dropout (0.309) ו-Maxout_Dropout (0.316) מובילים, בעוד Sigmoid — בשתי גרסאותיו — נמצא בתחתית (0.813–0.869). ממצאים אלה עקביים עם Fig3 במאמר המקורי.
+In Scenario 2, all methods show relatively high errors (best_joint range: 0.309–0.869), reflecting the difficulty of the Amazon Reviews dataset. Nevertheless, the qualitative trend is preserved: ReLU_Dropout (0.309) and Maxout_Dropout (0.316) lead, while Sigmoid — in both variants — sits at the bottom (0.813–0.869). These findings are consistent with Fig3 in the original paper.
 
 ---
 
-### תרחיש 3 — Dissimilar Tasks (MNIST → Amazon DVD)
+### Scenario 3 — Dissimilar Tasks (MNIST -> Amazon DVD)
 
 ![Frontier S3](paper_figures/Fig5_frontier_dissimilar_tasks.png)
 ![Sizes S3](paper_figures/Fig6_model_sizes_dissimilar_tasks.png)
 
-ב-Fig6 נראה כי מודל ה-LWTA מוקצה עם קיבולת פרמטרים גבוהה ביותר. עם זאת, ממצאי Fig5 עקביים עם הטענה שלמרות הקיבולת, המודל חווה שכחה חריפה במעבר למשימה הלא-דומה — best_old של LWTA_SGD (0.0078) גבוה מזה של ReLU_Dropout (0.0054), דבר המעיד על שמירה פחותה על ביצועי Task A.
+Fig6 shows that the LWTA model is allocated the highest parameter capacity. However, the results of Fig5 are consistent with the claim that despite this capacity, the model experiences severe forgetting when transitioning to the dissimilar task — best_old of LWTA_SGD (0.0078) is higher than that of ReLU_Dropout (0.0054), indicating weaker retention of Task A performance.
 
 ---
 
-## סיכום: האם המגמות שוחזרו?
+## Summary: Were the Trends Reproduced?
 
-מהשוואה בין הממצאים שהופקו לבין הגרפים במאמר המקורי, ניתן לאשר כי המגמות האיכותיות המרכזיות עקביות עם המאמר בכל שלושת התרחישים: עקומות Frontier של שיטות המבוססות על Dropout נמצאות קרוב יותר לראשית הצירים, ודירוג פונקציות האקטיבציה משתנה בין תרחיש לתרחיש. יש לציין שממצאים אלה הושגו עם 8 trials בלבד (32% מכיסוי ה-HP space של המאמר), ועם seed יחיד, ולכן יש להתייחס אליהם כתמיכה איכותית בלבד — לא כאימות כמותי מלא.
+Comparing the produced findings against the figures in the original paper, the key qualitative trends are consistent with the paper in all three scenarios: Frontier curves of Dropout-based methods are closer to the origin, and the ranking of activation functions varies between scenarios. It should be noted that these findings were achieved with only 8 trials (32% of the paper's HP space coverage) and a single seed, and should therefore be treated as qualitative support only — not as full quantitative validation.

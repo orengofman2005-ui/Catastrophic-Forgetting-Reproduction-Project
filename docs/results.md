@@ -1,52 +1,52 @@
-# תוצאות השחזור
+# Reproduction Results
 
-## גרפי Possibilities Frontier
+## Possibilities Frontier Figures
 
-כל גרף מציג את עקומת הגבול התחתון (lower convex hull) של כל 8 השיטות.
-ציר X = שגיאה על המשימה הישנה, ציר Y = שגיאה על המשימה החדשה (שניהם בסקאלה לוגריתמית).
-**נקודות קרובות לראשית הצירים = ביצועים טובים בשתי המשימות במקביל.**
-הקו האנכי המקווקו האפור = חציון שגיאת המשימה הישנה בתחילת אימון המשימה החדשה (נקודת הייחוס לפני השכחה).
+Each figure shows the lower convex hull curve of all 8 methods.
+X axis = error on the old task, Y axis = error on the new task (both on a logarithmic scale).
+**Points close to the origin = good performance on both tasks simultaneously.**
+The gray dashed vertical line = median old-task error at the start of new-task training (pre-forgetting reference point).
 
 ---
 
-### תרחיש 1 — עיצוב קלט מחדש (MNIST → Permuted MNIST)
+### Scenario 1 — Input Reformatting (MNIST -> Permuted MNIST)
 
 ![Frontier](../paper_figures/Fig1_frontier_input_reformatting.png)
-![גודל מודלים](../paper_figures/Fig2_model_sizes_input_reformatting.png)
+![Model Sizes](../paper_figures/Fig2_model_sizes_input_reformatting.png)
 
-שני הגרפים תואמים את Figure 1 ו-Figure 2 במאמר. שתי המשימות זהות מבחינה מבנית אך עם permutation שונה של הפיקסלים — הדורשת מהרשת ללמוד מחדש את מיפוי הפיקסלים תוך שמירה על הייצוגים המופשטים.
+Both figures correspond to Figure 1 and Figure 2 in the paper. The two tasks are structurally identical but with a different pixel permutation — requiring the network to relearn the pixel mapping while retaining the abstract representations.
 
-> **קישור בין הגרפים:** Fig2 מדגים כי תחת Dropout, המודלים הזוכים (Winning Models) בעלי קיבולת פרמטרים מורחבת משמעותית — בפרט Maxout ו-LWTA. ממצא זה עקבי עם השערת המאמר לפיה Dropout מאפשר אימון רשתות רחבות יותר, שלהן קיבולת עודפת לשמור על ייצוגי Task A בזמן לימוד Task B, כפי שמשתקף בעקומות ה-Frontier הקרובות יותר לראשית ב-Fig1.
+> **Connection between figures:** Fig2 demonstrates that under Dropout, the Winning Models have significantly larger parameter capacity — particularly Maxout and LWTA. This finding is consistent with the paper's hypothesis that Dropout enables training of wider networks with spare capacity to retain Task A representations while learning Task B, as reflected in the Frontier curves closer to the origin in Fig1.
 
 ---
 
-### תרחיש 2 — משימות דומות (Amazon Kitchen → Amazon DVD)
+### Scenario 2 — Similar Tasks (Amazon Kitchen -> Amazon DVD)
 
 ![Frontier](../paper_figures/Fig3_frontier_similar_tasks.png)
-![גודל מודלים](../paper_figures/Fig4_model_sizes_similar_tasks.png)
+![Model Sizes](../paper_figures/Fig4_model_sizes_similar_tasks.png)
 
-שני הגרפים תואמים את Figure 3 ו-Figure 4 במאמר. שתי המשימות הן ניתוח סנטימנט על קטגוריות מוצרים שונות של Amazon — דומות סמנטית אך עם שפה ומאפיינים שונים לכל קטגוריה.
+Both figures correspond to Figure 3 and Figure 4 in the paper. Both tasks are sentiment analysis on different Amazon product categories — semantically similar but with different language and features per category.
 
-ב-Scenario 2, כל השיטות מציגות שגיאות גבוהות יחסית (טווח best_joint: 0.309–0.869), המשקף את אופי הנתוני Amazon Reviews כייצוגים דלילים בממד גבוה. ReLU_Dropout מוביל (best_joint=0.309) ולא Maxout_Dropout (0.316) — שונה מתרחיש 1, מה שמחזק את הטענה שאין פונקציית אקטיבציה אוניברסלית. בנוסף, הפרש הביצועים בין Dropout ל-SGD קטן יותר כאן מאשר בתרחישים האחרים, דבר שעשוי לנבוע מ-transfer learning טבעי כאשר המשימות דומות סמנטית — גם SGD מצליח לנצל את הייצוגים שנלמדו.
+In Scenario 2, all methods show relatively high errors (best_joint range: 0.309–0.869), reflecting the nature of Amazon Reviews as high-dimensional sparse representations. ReLU_Dropout leads (best_joint=0.309) rather than Maxout_Dropout (0.316) — unlike Scenario 1, which reinforces the claim that there is no universal activation function. Additionally, the performance gap between Dropout and SGD is smaller here than in the other scenarios, which may stem from natural transfer learning when tasks are semantically similar — even SGD manages to exploit the learned representations.
 
 ---
 
-### תרחיש 3 — משימות שונות (MNIST → Amazon DVD)
+### Scenario 3 — Dissimilar Tasks (MNIST -> Amazon DVD)
 
 ![Frontier](../paper_figures/Fig5_frontier_dissimilar_tasks.png)
-![גודל מודלים](../paper_figures/Fig6_model_sizes_dissimilar_tasks.png)
+![Model Sizes](../paper_figures/Fig6_model_sizes_dissimilar_tasks.png)
 
-שני הגרפים תואמים את Figure 5 ו-Figure 6 במאמר. זהו הזוג המאתגר ביותר — ראייה ממוחשבת (MNIST) מול עיבוד שפה טבעית (Amazon), ללא שום חפיפה סמנטית.
+Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most challenging pair — computer vision (MNIST) versus natural language processing (Amazon), with no semantic overlap.
 
-> **אנומליה בתרחיש 3:** Fig6 מראה כי מודל ה-LWTA מוקצה עם קיבולת פרמטרים גבוהה ביותר. עם זאת, ממצאי Fig5 עקביים עם הטענה שהגדלת קיבולת לבדה אינה מנגנון הגנה מספק מפני interference כאשר המשימות שונות לחלוטין מבחינה סמנטית — best_old של LWTA_SGD (0.0078) גבוה מזה של ReLU_Dropout (0.0054), כלומר ה-LWTA שומר פחות על Task A למרות הגודל הגדול יותר.
+> **Anomaly in Scenario 3:** Fig6 shows that the LWTA model is allocated the highest parameter capacity. However, the results of Fig5 are consistent with the claim that increasing capacity alone is not a sufficient defense against interference when tasks are completely different semantically — best_old of LWTA_SGD (0.0078) is higher than that of ReLU_Dropout (0.0054), meaning LWTA retains Task A performance less well despite its larger size.
 
 ---
 
-## ממצאים מרכזיים
+## Key Findings
 
-| ממצא | ערך כמותי תומך |
+| Finding | Supporting Quantitative Value |
 |---|---|
-| Dropout עדיף על SGD | best_joint של Maxout_Dropout (0.039) מול Maxout_SGD (0.042) — תרחיש 1 |
-| Maxout+Dropout על ה-Frontier בכל תרחיש | best_joint: 0.039 / 0.316 / 0.171 בתרחישים 1/2/3 |
-| LWTA לא עקבי | מוביל ב-best_new בתרחיש 3 (0.1775) אך גרוע בתרחיש 2 (best_joint=0.347) |
-| Sigmoid גרוע באופן עקבי | best_joint: 0.173 / 0.813 / 0.201 — בתחתית בכל תרחיש |
+| Dropout superior to SGD | best_joint of Maxout_Dropout (0.039) vs. Maxout_SGD (0.042) — Scenario 1 |
+| Maxout+Dropout on Frontier in every scenario | best_joint: 0.039 / 0.316 / 0.171 in Scenarios 1/2/3 |
+| LWTA inconsistent | leads on best_new in Scenario 3 (0.1775) but poor in Scenario 2 (best_joint=0.347) |
+| Sigmoid consistently poor | best_joint: 0.173 / 0.813 / 0.201 — bottom in every scenario |

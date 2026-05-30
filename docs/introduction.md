@@ -1,45 +1,45 @@
-# מבוא ושאלת המחקר
+# Introduction and Research Question
 
-## רקע
+## Background
 
-שכחה קטסטרופלית (Catastrophic Forgetting) היא תופעה שבה רשת נוירונים המאומנת על משימה חדשה מאבדת באופן חד וחמור את יכולתה לבצע משימה קודמת. התופעה תוארה לראשונה על-ידי McCloskey & Cohen (1989) ו-Ratcliff (1990), וזוהתה כאתגר יסודי בבניית מערכות למידה רב-משימתית ולמידה לכל החיים (Continual Learning).
+Catastrophic Forgetting is a phenomenon in which a neural network trained on a new task loses its ability to perform a previous task sharply and severely. The phenomenon was first described by McCloskey & Cohen (1989) and Ratcliff (1990), and has been identified as a fundamental challenge in building multi-task and continual learning systems.
 
-מחקרם של גודפלו et al. (2015) הוא אחד הניסיונות השיטתיים הראשונים לכמת ולהשוות את רמת השכחה הקטסטרופלית בין שיטות אימון ופונקציות אקטיבציה מודרניות. המאמר בדק 8 צירופים של 4 פונקציות אקטיבציה עם 2 אלגוריתמי אימון, על פני 3 תרחישי למידה סדרתית.
-
----
-
-## עבודות קשורות
-
-**Srivastava et al. (2013) — "Compete to Compute"** הייתה העבודה המרכזית שגודפלו et al. ביקשו לאתגר. Srivastava et al. טענו כי פונקציית האקטיבציה LWTA (Local Winner Take All) עדיפה על Sigmoid ו-ReLU בהתנגדות לשכחה קטסטרופלית, כאשר מאמנים עם SGD רגיל. מחקרם נעשה על זוג משימות בודד, עם hyperparameters קבועים, ובלי השוואה לאלגוריתם Dropout.
-
-גודפלו et al. (2015) הרחיבו את הניסוי בארבעה ממדים: (1) שלושה זוגות משימות שונות, (2) חיפוש hyperparameters אקראי, (3) הכללת Dropout כאלגוריתם אימון, ו-(4) הצגת עקומות Frontier במקום נקודות בודדות. המסקנה המרכזית שלהם — כי Dropout עולה על כל פונקציות האקטיבציה ועל SGD בכל התרחישים — סתרה את הטענה המרכזית של Srivastava et al. לגבי עליונות LWTA.
-
-פרויקט שחזור זה מאמת האם מסקנה זו מחזיקה גם בסביבת PyTorch מודרנית ותחת מגבלות חישוב.
+The work of Goodfellow et al. (2015) is one of the first systematic attempts to quantify and compare the level of catastrophic forgetting across modern training methods and activation functions. The paper examined 8 combinations of 4 activation functions with 2 training algorithms, across 3 sequential learning scenarios.
 
 ---
 
-## שאלת המחקר
+## Related Work
 
-**האם המסקנות המרכזיות של גודפלו et al. (2015) — בפרט עליונות ה-Dropout על פני SGD במניעת שכחה קטסטרופלית, ותלות דירוג פונקציות האקטיבציה בסוג המשימה — ניתנות לשחזור בסביבת PyTorch מודרנית, תחת מגבלות חישוב של חומרה ביתית?**
+**Srivastava et al. (2013) — "Compete to Compute"** was the central work that Goodfellow et al. sought to challenge. Srivastava et al. argued that the LWTA (Local Winner Take All) activation function is superior to Sigmoid and ReLU in resisting catastrophic forgetting when training with plain SGD. Their study was conducted on a single task pair, with fixed hyperparameters, and without comparison to the Dropout algorithm.
 
-שאלת-משנה: האם ניתן להגיע לאותן מגמות איכותיות עם 8 ניסיונות לכל תנאי (במקום 25 במאמר המקורי), מבלי לשנות את המסקנות הכלליות?
+Goodfellow et al. (2015) extended the experiment along four dimensions: (1) three different task pairs, (2) random hyperparameter search, (3) inclusion of Dropout as a training algorithm, and (4) presentation of Frontier curves instead of single points. Their central conclusion — that Dropout outperforms all activation functions and SGD across all scenarios — contradicted Srivastava et al.'s main claim about LWTA superiority.
 
----
-
-## השערות העבודה
-
-שלוש השערות נבדקות:
-
-1. שיטות Dropout ישיגו עקומות Possibilities Frontier הקרובות יותר לראשית הצירים מאשר SGD — בכל שלושת התרחישים.
-2. Maxout+Dropout יופיע על ה-Frontier בכל שלושת התרחישים.
-3. דירוג פונקציות האקטיבציה ישתנה בין תרחישים — ללא מנצח אוניברסלי.
+This reproduction project validates whether that conclusion holds in a modern PyTorch environment and under computational constraints.
 
 ---
 
-## הגדרות מרכזיות
+## Research Question
 
-**Possibilities Frontier:** עקומת הגבול התחתון (lower convex hull) של ענן הנקודות (שגיאת Task A, שגיאת Task B). נקודות קרובות לראשית הצירים מייצגות שמירה מיטבית על שתי המשימות בו-זמנית. הצגה בסקאלה לוגריתמית מאפשרת הבחנה ברורה בין שיטות מובילות.
+**Can the central conclusions of Goodfellow et al. (2015) — in particular the superiority of Dropout over SGD in preventing catastrophic forgetting, and the scenario-dependent ranking of activation functions — be reproduced in a modern PyTorch environment under consumer hardware constraints?**
 
-**Winning Model:** המודל בעל ה-joint validation error (שגיאת Task A + שגיאת Task B) הנמוכה ביותר בתוך כל תנאי. משמש לגרפי גודל המודלים.
+Sub-question: Is it possible to arrive at the same qualitative trends with 8 trials per condition (instead of 25 in the original paper), without changing the general conclusions?
 
-**Sequential Learning:** אימון על Task A עד convergence (לפי early stopping על validation set), לאחר מכן אימון על Task B תוך מדידת ביצועים על שתיהן לאורך כל האימון.
+---
+
+## Working Hypotheses
+
+Three hypotheses are tested:
+
+1. Dropout methods will achieve Possibilities Frontier curves closer to the origin than SGD — in all three scenarios.
+2. Maxout+Dropout will appear on the Frontier in all three scenarios.
+3. The ranking of activation functions will vary between scenarios — with no universal winner.
+
+---
+
+## Key Definitions
+
+**Possibilities Frontier:** The lower convex hull boundary curve of the point cloud (Task A error, Task B error). Points close to the origin represent optimal retention of both tasks simultaneously. Logarithmic scale presentation allows clear distinction between leading methods.
+
+**Winning Model:** The model with the lowest joint validation error (Task A error + Task B error) within each condition. Used for the model-size figures.
+
+**Sequential Learning:** Training on Task A until convergence (via early stopping on a validation set), then training on Task B while measuring performance on both throughout the training process.
