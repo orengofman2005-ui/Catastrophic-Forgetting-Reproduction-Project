@@ -106,23 +106,20 @@ class AblationMLP(nn.Module):
 
 def _make_hp(hidden_dim=512, lr=0.01, weight_decay=0.0):
     """Return a minimal HParams-like namespace for the ablation trainer."""
-    from dataclasses import dataclass
-
-    @dataclass
-    class AblationHP:
-        hidden_dim:     int   = hidden_dim
-        lr:             float = lr
-        init_momentum:  float = 0.5
-        final_momentum: float = 0.9
-        momentum_sat:   int   = 20
-        lr_sat:         int   = 60
-        lr_decay:       float = 0.01
-        col_norm_h0:    float = 3.0
-        col_norm_h1:    float = 3.0
-        col_norm_out:   float = 3.0
-        weight_decay:   float = weight_decay
-
-    return AblationHP()
+    from types import SimpleNamespace
+    return SimpleNamespace(
+        hidden_dim     = hidden_dim,
+        lr             = lr,
+        init_momentum  = 0.5,
+        final_momentum = 0.9,
+        momentum_sat   = 20,
+        lr_sat         = 60,
+        lr_decay       = 0.01,
+        col_norm_h0    = 3.0,
+        col_norm_h1    = 3.0,
+        col_norm_out   = 3.0,
+        weight_decay   = weight_decay,
+    )
 
 
 def train_one_epoch_abl(model, loader, optimizer, hp, epoch):
