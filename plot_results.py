@@ -68,11 +68,20 @@ def get_frontier_points(trial_summaries: Dict[str, List[dict]]) -> Dict[str, np.
         pts = pts[valid]
 
         if len(pts) > 0:
-            # שימוש בקמור התחתון במקום בפארטו המחמיר
             frontier = get_lower_convex_hull(pts)
             frontier_points[cond_name] = frontier
 
     return frontier_points
+
+
+def get_baseline_error(trial_summaries: Dict[str, List[dict]]) -> float:
+    """Median old-task error at epoch 0 of new-task training — the pre-forgetting reference."""
+    baselines = []
+    for trials in trial_summaries.values():
+        for t in trials:
+            if t["points"]:
+                baselines.append(t["points"][0][0])
+    return float(np.median(baselines)) if baselines else None
 
 # This function creates a visual graph (a scatter plot with connecting lines).
 # It shows us how many mistakes the model made on the old task versus the new task.
@@ -114,7 +123,7 @@ def plot_frontier_from_all_trials(
     ax.set_xscale('log')
     ax.set_yscale('log')
 
-    ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
+    ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.5)
     ax.tick_params(axis="both", labelsize=11)
 
     limits = AXIS_LIMITS.get(scenario_num, dict(xlim=None, ylim=None))
@@ -123,6 +132,17 @@ def plot_frontier_from_all_trials(
         ax.set_ylim(limits["ylim"])
     else:
         ax.margins(0.1)
+
+    baseline = get_baseline_error(trial_summaries)
+    if baseline is not None:
+        ax.axvline(
+            x=baseline,
+            color="dimgray",
+            linestyle=":",
+            linewidth=1.8,
+            alpha=0.7,
+            label=f"Baseline (Task A error = {baseline:.3f})",
+        )
 
     ax.legend(
         bbox_to_anchor=(1.02, 1.0),
