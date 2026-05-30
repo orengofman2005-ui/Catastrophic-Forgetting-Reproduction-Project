@@ -7,26 +7,25 @@ import torch
 
 RESULTS_DIR = "results_repro"
 
-# A lookup table that decides what colors and labels to use when drawing lines on our graphs.
+# Color and label style for each condition
 STYLE_MAP = {
-    "Sigmoid_SGD": {"color": "blue", "label": "SGD Sigmoid"},
-    "Sigmoid_Dropout": {"color": "green", "label": "Dropout Sigmoid"},
-    "ReLU_SGD": {"color": "red", "label": "SGD ReLU"},
-    "ReLU_Dropout": {"color": "cyan", "label": "Dropout ReLU"},
-    "Maxout_SGD": {"color": "magenta", "label": "SGD Maxout"},
-    "Maxout_Dropout": {"color": "gold", "label": "Dropout Maxout"},
-    "LWTA_SGD": {"color": "black", "label": "SGD LWTA"},
-    "LWTA_Dropout": {"color": "gray", "label": "Dropout LWTA"},
+    "Sigmoid_SGD":     {"color": "blue",    "label": "SGD Sigmoid"},
+    "Sigmoid_Dropout": {"color": "green",   "label": "Dropout Sigmoid"},
+    "ReLU_SGD":        {"color": "red",     "label": "SGD ReLU"},
+    "ReLU_Dropout":    {"color": "cyan",    "label": "Dropout ReLU"},
+    "Maxout_SGD":      {"color": "magenta", "label": "SGD Maxout"},
+    "Maxout_Dropout":  {"color": "gold",    "label": "Dropout Maxout"},
+    "LWTA_SGD":        {"color": "black",   "label": "SGD LWTA"},
+    "LWTA_Dropout":    {"color": "gray",    "label": "Dropout LWTA"},
 }
 
-# This function finds the "bottom edge" of a group of points on our graph.
-# Imagine stretching a rubber band under the dots to see which ones stick out at the bottom.
+
 def get_lower_convex_hull(points: np.ndarray) -> np.ndarray:
     """
-    מחשב את הקצה התחתון של הקמור (Lower Convex Hull) במרחב הליניארי.
-    זה מאפשר לעקומה לעלות חזרה למעלה בצד ימין, בדיוק כמו במאמר.
+    Compute the lower convex hull of a point set in linear space.
+    This allows the curve to rise back up on the right side, matching the paper.
     """
-    # First, we sort the dots from left to right so we can easily read them in order.
+    # Sort points left to right by x coordinate
     sorted_indices = np.lexsort((points[:, 1], points[:, 0]))
     sorted_points = points[sorted_indices]
 
@@ -36,10 +35,8 @@ def get_lower_convex_hull(points: np.ndarray) -> np.ndarray:
             p1 = lower[-2]
             p2 = lower[-1]
             p3 = p
-            
-            # חישוב מכפלה וקטורית כדי לוודא שאנחנו יוצרים קמור תחתון (פניות שמאלה בלבד)
+            # Cross product to ensure we keep only left-turning points (lower convex hull)
             cross = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0])
-            
             if cross <= 0:
                 lower.pop()
             else:
@@ -49,9 +46,8 @@ def get_lower_convex_hull(points: np.ndarray) -> np.ndarray:
     return np.array(lower)
 
 
-# This function goes through all the results from our tests
-# and extracts the most successful points so we can draw them.
 def get_frontier_points(trial_summaries: Dict[str, List[dict]]) -> Dict[str, np.ndarray]:
+    """Extract the lower convex hull frontier from all trial trajectories per condition."""
     frontier_points = {}
 
     for cond_name, trials in trial_summaries.items():
@@ -63,7 +59,6 @@ def get_frontier_points(trial_summaries: Dict[str, List[dict]]) -> Dict[str, np.
             all_pts.extend(trial["points"])
 
         pts = np.asarray(all_pts, dtype=float)
-
         valid = np.isfinite(pts).all(axis=1) & (pts[:, 0] > 0) & (pts[:, 1] > 0)
         pts = pts[valid]
 
@@ -75,7 +70,7 @@ def get_frontier_points(trial_summaries: Dict[str, List[dict]]) -> Dict[str, np.
 
 
 def get_baseline_error(trial_summaries: Dict[str, List[dict]]) -> float:
-    """Median old-task error at epoch 0 of new-task training — the pre-forgetting reference."""
+    """Median old-task error at epoch 0 of new-task training — pre-forgetting reference."""
     baselines = []
     for trials in trial_summaries.values():
         for t in trials:
@@ -83,8 +78,7 @@ def get_baseline_error(trial_summaries: Dict[str, List[dict]]) -> float:
                 baselines.append(t["points"][0][0])
     return float(np.median(baselines)) if baselines else None
 
-# This function creates a visual graph (a scatter plot with connecting lines).
-# It shows us how many mistakes the model made on the old task versus the new task.
+
 # Axis limits per scenario to prevent overcrowding (especially Scenario 2 / Amazon)
 AXIS_LIMITS = {
     1: dict(xlim=None, ylim=None),
@@ -92,37 +86,32 @@ AXIS_LIMITS = {
     5: dict(xlim=None, ylim=None),
 }
 
+
 def plot_frontier_from_all_trials(
     trial_summaries: Dict[str, List[dict]],
     title: str,
     save_path: str,
     scenario_num: int,
 ):
+    """Plot the Possibilities Frontier for all 8 conditions."""
     fig, ax = plt.subplots(figsize=(10, 8))
 
     frontier_points = get_frontier_points(trial_summaries)
 
     for cond_name, pts in frontier_points.items():
         style = STYLE_MAP.get(cond_name, {"color": "gray", "label": cond_name})
-
         ax.plot(
-            pts[:, 0],
-            pts[:, 1],
-            color=style["color"],
-            linewidth=1.5,
-            marker="o",
-            markersize=4,
-            alpha=0.9,
+            pts[:, 0], pts[:, 1],
+            color=style["color"], linewidth=1.5,
+            marker="o", markersize=4, alpha=0.9,
             label=style["label"],
         )
 
     ax.set_xlabel("Old Task Classification Error", fontsize=13)
     ax.set_ylabel("New Task Classification Error", fontsize=13)
     ax.set_title(title, fontsize=18, pad=16)
-
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-
+    ax.set_xscale("log")
+    ax.set_yscale("log")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.5)
     ax.tick_params(axis="both", labelsize=11)
 
@@ -136,34 +125,25 @@ def plot_frontier_from_all_trials(
     baseline = get_baseline_error(trial_summaries)
     if baseline is not None:
         ax.axvline(
-            x=baseline,
-            color="dimgray",
-            linestyle=":",
-            linewidth=1.8,
-            alpha=0.7,
+            x=baseline, color="dimgray", linestyle=":",
+            linewidth=1.8, alpha=0.7,
             label=f"Baseline (Task A error = {baseline:.3f})",
         )
 
-    ax.legend(
-        bbox_to_anchor=(1.02, 1.0),
-        loc="upper left",
-        frameon=True,
-        fontsize=10,
-        borderpad=0.8,
-    )
-
+    ax.legend(bbox_to_anchor=(1.02, 1.0), loc="upper left",
+              frameon=True, fontsize=10, borderpad=0.8)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close(fig)
 
-# This function draws a bar chart (like pillars).
-# It shows us how big (how many 'brain cells' or parameters) the best models were.
+
 def plot_winning_model_sizes(
     winning_models: Dict[str, int],
     title: str,
     save_path: str,
 ):
-    names = list(winning_models.keys())
+    """Bar chart of the winning model parameter count per condition."""
+    names  = list(winning_models.keys())
     counts = [winning_models[k] for k in names]
 
     fig, ax = plt.subplots(figsize=(12, 6.5))
@@ -176,18 +156,66 @@ def plot_winning_model_sizes(
 
     for bar in bars:
         h = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            h,
-            f"{int(h):,}",
-            ha="center",
-            va="bottom",
-            fontsize=9,
-        )
+        ax.text(bar.get_x() + bar.get_width() / 2, h,
+                f"{int(h):,}", ha="center", va="bottom", fontsize=9)
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close(fig)
+
+
+def plot_best_joint_with_errorbars(
+    trial_summaries: Dict[str, List[dict]],
+    title: str,
+    save_path: str,
+):
+    """
+    Bar chart of mean best_joint per condition with ± std error bars.
+    best_joint per trial = minimum (old_error + new_error) achieved during Task 2 training.
+    """
+    cond_names = list(trial_summaries.keys())
+    means, stds = [], []
+
+    for cond in cond_names:
+        trials = trial_summaries[cond]
+        per_trial_bj = []
+        for t in trials:
+            if t["points"]:
+                pts = np.array(t["points"])
+                joint = pts[:, 0] + pts[:, 1]
+                per_trial_bj.append(float(np.min(joint)))
+        if per_trial_bj:
+            means.append(float(np.mean(per_trial_bj)))
+            stds.append(float(np.std(per_trial_bj)))
+        else:
+            means.append(0.0)
+            stds.append(0.0)
+
+    colors = [STYLE_MAP.get(c, {"color": "gray"})["color"] for c in cond_names]
+    labels = [STYLE_MAP.get(c, {"label": c})["label"] for c in cond_names]
+
+    fig, ax = plt.subplots(figsize=(11, 6))
+    x = np.arange(len(cond_names))
+    bars = ax.bar(x, means, yerr=stds, capsize=5,
+                  color=colors, alpha=0.85,
+                  error_kw={"elinewidth": 1.8, "ecolor": "black"})
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=10)
+    ax.set_ylabel("Best Joint Error (mean ± std across trials)", fontsize=11)
+    ax.set_title(title, fontsize=13, pad=12)
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+    for bar, m, s in zip(bars, means, stds):
+        ax.text(bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + s + 0.005,
+                f"{m:.3f}", ha="center", va="bottom", fontsize=8)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.close(fig)
+    print(f"Saved: {save_path}")
+
 
 if __name__ == "__main__":
     scenario_titles = {
@@ -204,7 +232,7 @@ if __name__ == "__main__":
 
         data = torch.load(ckpt_path, weights_only=False)
 
-        # קריאה לפונקציה המעודכנת שמציירת את הגרפים הלוגריתמיים
+        # Frontier figure
         plot_frontier_from_all_trials(
             data["trial_summaries"],
             scenario_titles[i],
@@ -212,11 +240,19 @@ if __name__ == "__main__":
             scenario_num=i,
         )
 
+        # Model sizes figure
         label_num = {1: 1, 3: 2, 5: 3}[i]
         plot_winning_model_sizes(
             data["winning_models"],
             f"Scenario {label_num}: Parameter Count of Winning Models",
             os.path.join(RESULTS_DIR, f"fig_s{i}_params.png"),
+        )
+
+        # Error bars figure (new)
+        plot_best_joint_with_errorbars(
+            data["trial_summaries"],
+            f"Scenario {label_num}: Best Joint Error — Mean ± Std (across {len(list(data['trial_summaries'].values())[0])} trials)",
+            os.path.join(RESULTS_DIR, f"fig_s{i}_errorbars.png"),
         )
 
         print(f"Plotted scenario {i}")
