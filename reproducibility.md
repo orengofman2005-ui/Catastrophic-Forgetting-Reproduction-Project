@@ -8,7 +8,7 @@ This file documents the exact hardware and software environment used to produce 
 
 | Component | Specification |
 |---|---|
-| GPU | NVIDIA GeForce RTX 3060 (8 GB VRAM) |
+| GPU | NVIDIA GeForce GTX 1660 Super (6 GB VRAM) |
 | CPU | Intel Core i7-10700 (8 cores, 16 threads) |
 | RAM | 16 GB DDR4 |
 | Storage | SSD (NVMe) — required for fast data loading |
@@ -85,10 +85,10 @@ This seed is applied once at startup in `final_experiment_repro.py` (module leve
 
 | Scenario | GPU Runtime | CPU Runtime (estimate) |
 |---|---|---|
-| Scenario 1 — Input Reformatting | ~2.5 hours | ~12 hours |
-| Scenario 2 — Similar Tasks (Amazon) | ~2 hours | ~10 hours |
-| Scenario 3 — Dissimilar Tasks | ~2 hours | ~10 hours |
-| **Total** | **~6.5 hours** | **~32 hours** |
+| Scenario 1 — Input Reformatting | ~3.5 hours | ~12 hours |
+| Scenario 2 — Similar Tasks (Amazon) | ~3 hours | ~10 hours |
+| Scenario 3 — Dissimilar Tasks | ~3 hours | ~10 hours |
+| **Total** | **~9.5 hours** | **~32 hours** |
 
 Runtimes are for 8 trials per condition (64 models total per scenario). With checkpointing enabled, interrupted runs resume automatically — no progress is lost.
 
