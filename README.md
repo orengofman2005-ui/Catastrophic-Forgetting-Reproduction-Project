@@ -1,17 +1,65 @@
-# Replication Study: Empirical Investigation of Catastrophic Forgetting (Sami Shamoon College)
+# 🧠 פרויקט שחזור: שכחה קטסטרופלית (Catastrophic Forgetting)
 
-This repository contains a student replication of the 2013 paper by Ian Goodfellow et al. investigating catastrophic forgetting in neural networks, completed at Sami Shamoon College (SCE).
+מאגר זה מכיל את קוד המקור והתיעוד עבור שחזור אקדמי של תוצאות המחקר בנושא שכחה קטסטרופלית ברשתות נוירונים. המחקר מנתח באופן ספציפי את האיזון בין למידת משימות חדשות לבין שימור ידע קודם לאורך שלבי אימון סדרתיים.
 
-## Scenarios
-The project replicates the experimental findings across three primary scenarios, testing whether a model forgets its original training when forced to learn a new dataset:
-1. **Scenario 1: Reformatting Task** (MNIST vs. Permuted MNIST): The identical problem but with a randomly scrambled input vector.
-2. **Scenario 2: Similar Task** (Amazon Reviews Books vs. Electronics): A domain adaptation problem using text sentiment classification.
-3. **Scenario 3: Dissimilar Task** (MNIST Subset vs. Amazon Reviews): Transitioning between two completely unrelated data domains.
+## 📂 ניווט בפרויקט
 
-## The Role of Dropout
-Our replication confirms the original findings that **Dropout** is critical in preventing catastrophic forgetting. By randomly zeroing out units during training, Dropout prevents complex co-adaptations between neurons. This forces the network to develop broader, more robust features rather than hyper-specializing, which allows the model to preserve useful representations when moving from the old task to the new task.
+בהתאם לדרישות התיעוד האקדמיות, הקבצים הבאים מפרטים את המתודולוגיה והממצאים של הפרויקט:
 
-## Results & Figures
-The `results/` folder contains generated visual evidence corresponding to the hyperparameter search runs. 
-* **Figures 1, 3, and 5** display the 'Frontiers' (Old Task Error vs. New Task Error) for each scenario. An "Ideal" marker at `[0.01, 0.01]` represents the target goal of maintaining minimal error on both tasks.
-* **Figures 2, 4, and 6** detail the 'Model Sizes' (Parameter Count) of the winning models found during the hyperparameter search.
+*   [**תובנות ומסקנות (Takeaways)**](takeaways.md) – ניתוח רפלקטיבי (1–2 עמודים) המפרט מסקנות אישיות, פרשנות לתוצאות המשוחזרות ותובנות שנרכשו בתהליך הלמידה.
+*   [**שימוש ב-AI ומתודולוגיה**](docs/ai_methodology.md) – תיעוד השילוב של כלי בינה מלאכותית לתכנון ראשוני ובניית שלד הקוד, כולל תהליך האימות האנושי (Human-in-the-loop).
+*   [**חשיבה אלגוריתמית**](docs/algorithm.md) – פירוט מודולרי של שלבי הפרויקט, לוגיקת המימוש ופרוטוקולי האימות הספציפיים ששימשו בכל שלב.
+*   [**תוכניות עבודה עם AI (AI Plans)**](docs/ai_plans.md) – תיעוד שיחות התכנון הגולמיות עם Claude: שאלות שנשאלו, תוכניות שהתגבשו, וההבדל בין התכנון לביצוע בפועל.
+
+## 🛠 מבנה הפרויקט
+
+המאגר מאורגן בצורה המאפשרת ביקורת עמיתים ובדיקה מודולרית:
+
+*   **עיבוד נתונים: `prepare_amazon_npz.py`** – הכנה ופורמט של מערך הנתונים (Amazon Reviews) עבור תרחישי למידה מתמשכת.
+*   **מנוע שחזור: `pytorch_reproduction_suite.py`** – מימוש לוגיקת האימון ואסטרטגיות לצמצום שכחה, תוך התמקדות באלגוריתם ה-Dropout.
+*   **ניסוי מלא: `final_experiment_repro.py`** – גרסה מתקדמת ומלאה של הניסוי עם חיפוש היפר-פרמטרים אקראי (25 ניסיונות × 8 תנאים), המשך אוטומטי ממצב שמור, ו-progress bars בזמן אמת. משתמשת בטווחי חיפוש מדויקים מנספחי המאמר.
+*   **ויזואליזציה: `plot_results.py`** – הפקת גרפים השוואתיים המבוססים על לוגים מהניסויים.
+
+## ⚙️ מערך ניסוי מבוקר
+
+למרות שזהות נומרית מדויקת בין סביבות חומרה שונות היא נדירה, פרויקט זה משתמש במערך מבוקר כדי להבטיח שניתן לשחזר את המגמות האיכותיות המרכזיות שדווחו במאמר המקורי.
+
+### מתודולוגיית עבודה
+השערה $\leftarrow$ מימוש $\leftarrow$ בדיקה $\leftarrow$ תיקון $\leftarrow$ השוואה $\leftarrow$ שחזור
+
+*   **קיבוע Seed רנדומלי:** נקבע ל-42 (עבור PyTorch ו-NumPy) כדי לצמצם שונות סטוכסטית בין הרצות מקומיות.
+*   **הגדרות היפר-פרמטרים:**
+    *   **טווחי חיפוש:** קצב למידה `10^U[-2.0, -0.5]`, גודל שכבה נסתרת `U[250, 5000]`, דעיכת LR רוויה (לא L2 weight decay), ומומנטום עולה ליניארית מ-0.5. הטווחים תואמים לנספחי המאמר.
+    *   **עצירה מוקדמת (Early Stopping):** הוגדרה סבלנות (Patience) של 20 אפוקים לכל משימה (המאמר: 100; הוקטן לזמן סביר).
+*   **צמצום שונות:** התוצאות המוצגות מבוססות על הרצות חוזרות כדי להבטיח שהמגמות המדווחות יציבות ואינן תוצר מקרי של אתחול ספציפי.
+
+## 🚀 מדריך הרצה
+
+כדי לשחזר את תוצאות הניסויים, יש להריץ את הסקריפטים הבאים לפי הסדר:
+
+```bash
+# שלב 1: עיבוד מקדים של מערך הנתונים
+python prepare_amazon_npz.py
+
+# שלב 2: הרצת הניסוי המלא (מומלץ — משמר checkpoint אחרי כל condition)
+python final_experiment_repro.py
+
+# חלופה: מנוע שחזור בסיסי
+# python pytorch_reproduction_suite.py
+
+# שלב 3: הפקת גרפים השוואתיים (עבור pytorch_reproduction_suite.py בלבד)
+# python plot_results.py
+```
+
+## 📊 תוצרי איכות מצופים
+
+ההרצה מייצרת לוגים וגרפים שנועדו להתכתב עם המגמות העיקריות שנצפו במחקר המקורי:
+
+*   **Checkpoints:** נשמרים בתיקיית `results_repro/` בפורמט `.pt` (אחד לכל condition, לצורך המשך אוטומטי).
+*   **ויזואליזציות** (`results_repro/`):
+    *   `fig1_frontier_repro.png` / `fig1_sizes_repro.png`: Input Reformatting (MNIST → Permuted MNIST).
+    *   `fig3_frontier_repro.png` / `fig3_sizes_repro.png`: Similar Tasks (Amazon Kitchen → DVD).
+    *   `fig5_frontier_repro.png` / `fig5_sizes_repro.png`: Dissimilar Tasks (MNIST 2/9 → Amazon DVD).
+*   **תוצאות בסיס** (`results_fixed/`): גרפים מהרצה קודמת של `pytorch_reproduction_suite.py`.
+
+תוצרים אלו מדגימים את ה-Trade-off בין גמישות בלמידת משימה חדשה לבין יציבות הזיכרון, תוך הדגשת היעילות של Dropout בצמצום אובדן המידע.
