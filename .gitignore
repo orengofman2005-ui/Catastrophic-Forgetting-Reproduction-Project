@@ -45,3 +45,6 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# pycache
+__pycache__/
