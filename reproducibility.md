@@ -10,9 +10,10 @@ This file documents the exact hardware and software environment used to produce 
 |---|---|
 | GPU | NVIDIA GeForce GTX 1660 Super (6 GB VRAM) |
 | CPU | Intel Core i5-10400F (6 cores, 12 threads, 2.90 GHz) |
-| RAM | 16 GB DDR4 |
-| Storage | SSD (NVMe) — required for fast data loading |
-| OS | Windows 11 (64-bit) |
+| RAM | 8 GB |
+| Storage | 943 GB total, 358 GB used |
+| OS | Windows 11 64-bit (x64) |
+| Device name | DESKTOP-QBSE60G |
 
 ---
 
