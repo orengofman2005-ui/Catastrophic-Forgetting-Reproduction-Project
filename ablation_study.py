@@ -40,7 +40,7 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 
 from final_experiment_repro import (
-    SEED, DEVICE, BATCH_SIZE, SAMPLE_RATE,
+    SEED, DEVICE, BATCH_SIZE,
     get_permuted_mnist_loaders,
     evaluate_error,
     set_seed,
