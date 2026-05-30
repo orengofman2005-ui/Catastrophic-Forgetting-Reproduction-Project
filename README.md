@@ -1,65 +1,89 @@
-# 🧠 פרויקט שחזור: שכחה קטסטרופלית (Catastrophic Forgetting)
+# Catastrophic Forgetting — PyTorch Reproduction
 
-מאגר זה מכיל את קוד המקור והתיעוד עבור שחזור אקדמי של תוצאות המחקר בנושא שכחה קטסטרופלית ברשתות נוירונים. המחקר מנתח באופן ספציפי את האיזון בין למידת משימות חדשות לבין שימור ידע קודם לאורך שלבי אימון סדרתיים.
+PyTorch reproduction of:
+> **"An Empirical Investigation of Catastrophic Forgetting in Gradient-Based Neural Networks"**
+> Goodfellow, Mirza, Xiao, Courville, Bengio (arXiv:1312.6211, 2015)
 
-## 📂 ניווט בפרויקט
+---
 
-בהתאם לדרישות התיעוד האקדמיות, הקבצים הבאים מפרטים את המתודולוגיה והממצאים של הפרויקט:
+## What this reproduces
 
-*   [**תובנות ומסקנות (Takeaways)**](takeaways.md) – ניתוח רפלקטיבי (1–2 עמודים) המפרט מסקנות אישיות, פרשנות לתוצאות המשוחזרות ותובנות שנרכשו בתהליך הלמידה.
-*   [**שימוש ב-AI ומתודולוגיה**](docs/ai_methodology.md) – תיעוד השילוב של כלי בינה מלאכותית לתכנון ראשוני ובניית שלד הקוד, כולל תהליך האימות האנושי (Human-in-the-loop).
-*   [**חשיבה אלגוריתמית**](docs/algorithm.md) – פירוט מודולרי של שלבי הפרויקט, לוגיקת המימוש ופרוטוקולי האימות הספציפיים ששימשו בכל שלב.
-*   [**תוכניות עבודה עם AI (AI Plans)**](docs/ai_plans.md) – תיעוד שיחות התכנון הגולמיות עם Claude: שאלות שנשאלו, תוכניות שהתגבשו, וההבדל בין התכנון לביצוע בפועל.
+The paper trains two-layer MLPs on pairs of tasks sequentially and measures the trade-off between performance on the old task vs. the new task. We reproduce all three experimental scenarios:
 
-## 🛠 מבנה הפרויקט
+| Scenario | Old Task | New Task |
+|---|---|---|
+| 1 — Input Reformatting | MNIST | Permuted MNIST |
+| 2 — Similar Tasks | Amazon Kitchen reviews | Amazon DVD reviews |
+| 3 — Dissimilar Tasks | MNIST (digits 2 & 9) | Amazon DVD reviews |
 
-המאגר מאורגן בצורה המאפשרת ביקורת עמיתים ובדיקה מודולרית:
+Each scenario trains **8 conditions** (4 activations × SGD / Dropout):
+Sigmoid, ReLU, Maxout, LWTA — each with and without Dropout.
 
-*   **עיבוד נתונים: `prepare_amazon_npz.py`** – הכנה ופורמט של מערך הנתונים (Amazon Reviews) עבור תרחישי למידה מתמשכת.
-*   **מנוע שחזור: `pytorch_reproduction_suite.py`** – מימוש לוגיקת האימון ואסטרטגיות לצמצום שכחה, תוך התמקדות באלגוריתם ה-Dropout.
-*   **ניסוי מלא: `final_experiment_repro.py`** – גרסה מתקדמת ומלאה של הניסוי עם חיפוש היפר-פרמטרים אקראי (25 ניסיונות × 8 תנאים), המשך אוטומטי ממצב שמור, ו-progress bars בזמן אמת. משתמשת בטווחי חיפוש מדויקים מנספחי המאמר.
-*   **ויזואליזציה: `plot_results.py`** – הפקת גרפים השוואתיים המבוססים על לוגים מהניסויים.
+---
 
-## ⚙️ מערך ניסוי מבוקר
+## Repo structure
 
-למרות שזהות נומרית מדויקת בין סביבות חומרה שונות היא נדירה, פרויקט זה משתמש במערך מבוקר כדי להבטיח שניתן לשחזר את המגמות האיכותיות המרכזיות שדווחו במאמר המקורי.
+```
+final_experiment_repro.py   # main experiment — all 3 scenarios
+plot_results.py             # generates frontier + model-size plots
+prepare_amazon_npz.py       # preprocesses raw Amazon review files → .npz
+bonus_improvements.py       # additional ablations
+requirements.txt            # dependencies
+takeaways.md                # findings and deviations from the paper
 
-### מתודולוגיית עבודה
-השערה $\leftarrow$ מימוש $\leftarrow$ בדיקה $\leftarrow$ תיקון $\leftarrow$ השוואה $\leftarrow$ שחזור
+paper_figures/              # final plots named to match paper figures
+  Fig1_frontier_input_reformatting.png
+  Fig2_model_sizes_input_reformatting.png
+  Fig3_frontier_similar_tasks.png
+  Fig4_model_sizes_similar_tasks.png
+  Fig5_frontier_dissimilar_tasks.png
+  Fig6_model_sizes_dissimilar_tasks.png
 
-*   **קיבוע Seed רנדומלי:** נקבע ל-42 (עבור PyTorch ו-NumPy) כדי לצמצם שונות סטוכסטית בין הרצות מקומיות.
-*   **הגדרות היפר-פרמטרים:**
-    *   **טווחי חיפוש:** קצב למידה `10^U[-2.0, -0.5]`, גודל שכבה נסתרת `U[250, 5000]`, דעיכת LR רוויה (לא L2 weight decay), ומומנטום עולה ליניארית מ-0.5. הטווחים תואמים לנספחי המאמר.
-    *   **עצירה מוקדמת (Early Stopping):** הוגדרה סבלנות (Patience) של 20 אפוקים לכל משימה (המאמר: 100; הוקטן לזמן סביר).
-*   **צמצום שונות:** התוצאות המוצגות מבוססות על הרצות חוזרות כדי להבטיח שהמגמות המדווחות יציבות ואינן תוצר מקרי של אתחול ספציפי.
-
-## 🚀 מדריך הרצה
-
-כדי לשחזר את תוצאות הניסויים, יש להריץ את הסקריפטים הבאים לפי הסדר:
-
-```bash
-# שלב 1: עיבוד מקדים של מערך הנתונים
-python prepare_amazon_npz.py
-
-# שלב 2: הרצת הניסוי המלא (מומלץ — משמר checkpoint אחרי כל condition)
-python final_experiment_repro.py
-
-# חלופה: מנוע שחזור בסיסי
-# python pytorch_reproduction_suite.py
-
-# שלב 3: הפקת גרפים השוואתיים (עבור pytorch_reproduction_suite.py בלבד)
-# python plot_results.py
+results_repro/              # checkpoints + plots from the reproduction run
+  scenario_1_repro.pt
+  scenario_3_repro.pt
+  scenario_5_repro.pt
+  fig_s1_frontier.png  /  fig_s1_params.png
+  fig_s3_frontier.png  /  fig_s3_params.png
+  fig_s5_frontier.png  /  fig_s5_params.png
 ```
 
-## 📊 תוצרי איכות מצופים
+> **Note:** `data/` (MNIST ~45 MB, Amazon NPZ ~38 MB each) is excluded from git via `.gitignore`.
+> Run `prepare_amazon_npz.py` to generate the Amazon files from raw reviews.
+> MNIST is downloaded automatically by PyTorch on first run.
 
-ההרצה מייצרת לוגים וגרפים שנועדו להתכתב עם המגמות העיקריות שנצפו במחקר המקורי:
+---
 
-*   **Checkpoints:** נשמרים בתיקיית `results_repro/` בפורמט `.pt` (אחד לכל condition, לצורך המשך אוטומטי).
-*   **ויזואליזציות** (`results_repro/`):
-    *   `fig1_frontier_repro.png` / `fig1_sizes_repro.png`: Input Reformatting (MNIST → Permuted MNIST).
-    *   `fig3_frontier_repro.png` / `fig3_sizes_repro.png`: Similar Tasks (Amazon Kitchen → DVD).
-    *   `fig5_frontier_repro.png` / `fig5_sizes_repro.png`: Dissimilar Tasks (MNIST 2/9 → Amazon DVD).
-*   **תוצאות בסיס** (`results_fixed/`): גרפים מהרצה קודמת של `pytorch_reproduction_suite.py`.
+## How to run
 
-תוצרים אלו מדגימים את ה-Trade-off בין גמישות בלמידת משימה חדשה לבין יציבות הזיכרון, תוך הדגשת היעילות של Dropout בצמצום אובדן המידע.
+```bash
+# 1 — prepare Amazon data (only needed once)
+python prepare_amazon_npz.py
+
+# 2 — run all experiments (auto-saves checkpoint after each condition)
+python final_experiment_repro.py
+
+# 3 — generate plots from saved checkpoints
+python plot_results.py
+```
+
+Plots are saved to `results_repro/`. If the run is interrupted it resumes automatically from the last saved checkpoint.
+
+---
+
+## Deviations from the paper
+
+| Parameter | Paper | This repo | Reason |
+|---|---|---|---|
+| Trials per condition | 25 | 8 | Consumer hardware |
+| Early-stopping patience | 100 epochs | 15 epochs | Consumer hardware |
+| Framework | Theano / Pylearn2 | PyTorch | Theano is deprecated |
+
+All architectural choices (2 hidden layers, softmax output, max-norm constraint, random hyperparameter search) match the paper exactly.
+
+---
+
+## Results
+
+Plots in `paper_figures/` correspond directly to Figures 1–6 in the paper.
+Key finding reproduced: **Dropout consistently dominates** — it achieves the best trade-off between old-task retention and new-task adaptation across all three scenarios.
