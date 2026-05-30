@@ -114,15 +114,15 @@ def plot_frontier_from_all_trials(
     ax.set_xscale('log')
     ax.set_yscale('log')
 
+    ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
+    ax.tick_params(axis="both", labelsize=11)
+
     limits = AXIS_LIMITS.get(scenario_num, dict(xlim=None, ylim=None))
     if limits["xlim"]:
         ax.set_xlim(limits["xlim"])
-    if limits["ylim"]:
         ax.set_ylim(limits["ylim"])
-
-    ax.grid(True, which="both", linestyle="--", alpha=0.5)
-    ax.tick_params(axis="both", labelsize=11)
-    ax.margins(0.1)
+    else:
+        ax.margins(0.1)
 
     ax.legend(
         bbox_to_anchor=(1.02, 1.0),
