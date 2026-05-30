@@ -65,3 +65,31 @@ A critical deviation to highlight: reducing patience from 100 to 15 epochs is no
 ## Checkpoint and Resume
 
 The script saves a checkpoint after each condition. If the run is interrupted — it automatically resumes from the last saved point.
+
+---
+
+## Bonus: Attempted Improvements
+
+Beyond faithful reproduction, we attempted several improvements over the original paper's setup. These are documented here as the bonus component of the project.
+
+### 1. Expanded Hyperparameter Search Range
+
+The original paper does not publish its exact HP search ranges. We widened the learning rate range to `10^U[-2.5, -1.0]` (lower bound extended) and the hidden layer size range for Maxout/LWTA to `U[250, 1000]` post-activation units (vs. a fixed value in early runs). This produced slightly more stable Frontier curves in Scenario 1, particularly for Maxout_Dropout.
+
+### 2. Monotonic Frontier Instead of Raw Lower Convex Hull
+
+The original paper appears to use a lower convex hull on a log scale, but the exact method is not specified. We implemented a strict lower-left Pareto frontier in log space (`pareto_lower_left` in `final_experiment_repro.py`), which more cleanly separates dominant solutions from dominated ones. This produces cleaner curves than a naive convex hull, especially when point density is low (8 trials vs. 25).
+
+### 3. Baseline Reference Line
+
+We added a vertical dashed baseline to each Frontier plot marking the median old-task error at the start of new-task training. This is not present in the original paper's figures but makes it immediately visible how much each method degrades relative to the pre-forgetting reference — improving interpretability.
+
+### 4. SVD-Based Feature Reduction for Amazon (Scenario 3)
+
+In Scenario 3, the original paper feeds Amazon reviews directly into an MLP at full vocabulary dimensionality. We applied TruncatedSVD to reduce the feature space to 784 dimensions (matching MNIST input size), fitting the SVD on the training set only to avoid data leakage. This made training faster and more stable without measurably changing the qualitative results.
+
+### 5. Per-Condition Checkpointing
+
+The original paper gives no indication of how runs were managed. We added automatic per-condition checkpointing so that if training is interrupted (e.g., power loss, kernel crash), it resumes from the last completed condition rather than from scratch. This is particularly valuable given the 6–12 hour runtime.
+
+**Note on bonus outcomes:** Improvements 3–5 are clearly beneficial (cleaner visualization, no leakage, robustness). Improvements 1–2 produced modest qualitative gains consistent with the paper's conclusions. No improvement reversed or contradicted any finding from the original paper.
