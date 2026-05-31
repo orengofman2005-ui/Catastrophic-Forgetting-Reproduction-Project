@@ -322,10 +322,14 @@ def _plot_ablation_bars(labels, means, stds, ylabel, title, save_path, color="st
     ax.set_ylabel(ylabel, fontsize=12)
     ax.set_title(title, fontsize=13, pad=12)
     ax.grid(axis="y", linestyle="--", alpha=0.4)
-    for bar, m, s in zip(bars, means, stds):
+    # Extend y-axis to leave room above the tallest error bar
+    top = max(m + s for m, s in zip(means, stds))
+    ax.set_ylim(0, top * 1.25)
+    for bar, m in zip(bars, means):
         ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + s + 0.003,
-                f"{m:.3f}", ha="center", va="bottom", fontsize=10)
+                bar.get_height() * 0.5,
+                f"{m:.3f}", ha="center", va="center",
+                fontsize=10, color="white", fontweight="bold")
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close(fig)
