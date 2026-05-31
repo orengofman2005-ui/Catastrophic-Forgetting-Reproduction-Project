@@ -35,16 +35,16 @@ The experiment follows the original structure of Goodfellow et al. (2015):
 
 Random search — 8 trials per condition (paper: 25):
 
-| Parameter | Paper (unspecified) | This Reproduction |
+| Parameter | This Reproduction (actual code) | Note |
 |---|---|---|
-| Learning rate | ~10^U[-2.0, -0.5] (estimated) | 10^U[-2.5, -1.0] |
-| Hidden layer size (Maxout/LWTA) | ~U[250, 5000] (estimated) | U[250, 1000] post-act units |
-| Hidden layer size (ReLU/Sigmoid) | ~U[250, 5000] (estimated) | U[250, 2000] |
-| Max-norm (per layer) | U[1.0, 5.0] | U[1.0, 5.0] |
-| Weight initialization range | 10^U[-2.3, -1.0] | 10^U[-2.3, -1.0] |
-| Momentum schedule | 0.5 → ~0.99 | 0.5 → U[0.5, 0.99] |
+| Learning rate | 10^U[-2.5, -1.0] | Paper does not specify; range chosen empirically |
+| Hidden layer size (Maxout/LWTA) | U[250, 1000] post-activation units | Pre-activation layer = hidden_dim × k |
+| Hidden layer size (ReLU/Sigmoid) | U[250, 2000] | |
+| Max-norm (per layer) | U[1.0, 5.0] | Applied per-layer independently |
+| Weight initialization range | 10^U[-2.3, -1.0] | |
+| Momentum schedule | 0.5 → U[0.5, 0.99] linearly | |
 
-> The original paper does not publish its exact HP search ranges. Our ranges were chosen to bracket plausible values and widened slightly at the lower end (LR) to improve convergence stability. See the Bonus section below for rationale.
+> **Note on HP ranges:** The original paper does not publish its hyperparameter search ranges. The values above are what this reproduction actually uses (see `sample_hparams()` in `final_experiment_repro.py`). They were chosen to cover a plausible range around commonly reported values for this class of models.
 
 > Maxout and LWTA: bias initialized to 0 (random initialization causes one unit in the group to dominate).
 > Sigmoid: bias initialized from a negative range to encourage sparsity.
@@ -72,11 +72,11 @@ The script saves a checkpoint after each condition. If the run is interrupted �
 
 ## Bonus: Attempted Improvements
 
-Beyond faithful reproduction, we attempted several improvements over the original paper's setup. These are documented here as the bonus component of the project.
+Beyond the core reproduction (which is approximate — see Deviations table above), we attempted several improvements over the original paper's setup. These are documented here as the bonus component of the project.
 
 ### 1. Expanded Hyperparameter Search Range
 
-The original paper does not publish its exact HP search ranges. We widened the learning rate range to `10^U[-2.5, -1.0]` (lower bound extended) and the hidden layer size range for Maxout/LWTA to `U[250, 1000]` post-activation units (vs. a fixed value in early runs). This produced slightly more stable Frontier curves in Scenario 1, particularly for Maxout_Dropout.
+Since the original paper does not publish its HP search ranges, our choices (`10^U[-2.5, -1.0]` for LR, `U[250, 1000]` post-activation units for Maxout/LWTA) were determined empirically. An earlier version of this code used narrower ranges; widening the lower LR bound produced slightly more stable Frontier curves in Scenario 1, particularly for Maxout_Dropout.
 
 ### 2. Monotonic Frontier Instead of Raw Lower Convex Hull
 

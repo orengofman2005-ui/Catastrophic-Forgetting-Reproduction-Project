@@ -1,15 +1,35 @@
+"""
+prepare_amazon_npz.py
+=====================
+Preprocesses the Amazon product review dataset (Dredze et al.) into .npz files
+for use in Scenarios 2 and 3 of the catastrophic forgetting reproduction.
+
+Each category (books, dvd, electronics, kitchen) is vectorized using a shared
+DictVectorizer fitted on the union of all categories, then projected onto the
+top-5000 features by corpus frequency. Each category is split 80/20
+(train/test) with stratification, and saved as a compressed .npz file.
+
+Usage:
+    python prepare_amazon_npz.py
+
+Expected input layout:
+    data/amazon/{books,dvd,electronics,kitchen}/{positive,negative}.review
+
+Output:
+    data/amazon/{books,dvd,electronics,kitchen}.npz
+    Each file contains: X_train, y_train, X_test, y_test
+"""
+
 import os
 import numpy as np
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.model_selection import train_test_split
 
-# This is a list of the different types of Amazon products we want to look at.
 CATEGORIES = ["books", "dvd", "electronics", "kitchen"]
 
 
-# This function takes a single line of text from a review file.
-# It breaks the text apart to find important words and their scores.
 def parse_review_line(line: str):
+    """Parse one line of the Dredze feature-value format into a dict."""
     feats = {}
     for item in line.strip().split():
         if ":" not in item:
@@ -22,9 +42,8 @@ def parse_review_line(line: str):
     return feats
 
 
-# This function opens the folders for a specific product type.
-# It reads both the positive reviews (label 1) and negative reviews (label 0).
 def load_category_rows(category_path):
+    """Load positive (label=1) and negative (label=0) reviews for one category."""
     rows = []
     labels = []
 
@@ -38,22 +57,18 @@ def load_category_rows(category_path):
     return rows, np.array(labels, dtype=np.int64)
 
 
-# This function looks at all reviews across all categories.
-# It figures out which 5000 words are the most common overall.
 def build_shared_vectorizer(base_path="data/amazon", max_features=5000):
+    """Fit a DictVectorizer on all categories; return it and the top-k feature indices."""
     all_rows = []
     for cat in CATEGORIES:
         cat_path = os.path.join(base_path, cat)
         rows, _ = load_category_rows(cat_path)
         all_rows.extend(rows)
 
-    # This tool turns our text words into a mathematical format (numbers) 
-    # that a computer can easily understand and calculate.
     vectorizer = DictVectorizer(sparse=True)
     X_sparse = vectorizer.fit_transform(all_rows)
 
-    # Top features by total frequency across all domains
-    # We sort the words by how often they appear and keep only the top ones.
+    # Select top-max_features features by aggregate corpus frequency.
     freqs = np.asarray(X_sparse.sum(axis=0)).ravel()
     keep_idx = np.argsort(freqs)[::-1][:max_features]
     keep_idx = np.sort(keep_idx)
@@ -61,10 +76,8 @@ def build_shared_vectorizer(base_path="data/amazon", max_features=5000):
     return vectorizer, keep_idx
 
 
-# This function takes the reviews for one specific category and converts
-# them into numbers. Then, it splits them into a "practice" group for learning
-# and a "test" group to check how well the computer actually learned.
 def vectorize_category(category_path, vectorizer, keep_idx):
+    """Project one category onto the shared feature space and split train/test."""
     rows, y = load_category_rows(category_path)
 
     X = vectorizer.transform(rows)
@@ -81,8 +94,6 @@ def vectorize_category(category_path, vectorizer, keep_idx):
     return X_train, y_train, X_test, y_test
 
 
-# This is the main starting point. It goes through every category,
-# prepares the text into numbers, and saves them into ready-to-use files.
 def save_all_npz(base_path="data/amazon", max_features=5000):
     vectorizer, keep_idx = build_shared_vectorizer(
         base_path=base_path,
@@ -105,8 +116,9 @@ def save_all_npz(base_path="data/amazon", max_features=5000):
             X_test=X_test,
             y_test=y_test,
         )
-        print(f"Saved {out_path} | train {X_train.shape} | test {X_test.shape}")
+        print(f"Saved {out_path} | train={X_train.shape} | test={X_test.shape}")
 
 
 if __name__ == "__main__":
     save_all_npz()
+    print("Preprocessing complete. Files saved to data/amazon/*.npz")

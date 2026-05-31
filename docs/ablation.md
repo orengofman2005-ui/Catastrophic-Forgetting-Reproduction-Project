@@ -73,11 +73,11 @@ As a bonus beyond the original paper's scope, we tested whether BatchNorm reduce
 
 ### Interpretation
 
-BatchNorm reduces forgetting by approximately **31%** compared to the same network without it. This is a meaningful improvement that the original paper could not have observed.
+With only 4 trials per configuration, this result is preliminary. BatchNorm **suggests** a reduction in forgetting of approximately **31%** compared to the same network without it. This direction is worth investigating further; the effect size should be treated with caution at this sample size.
 
 The likely mechanism: BatchNorm normalizes activations layer by layer, which stabilizes the internal representation space and reduces the magnitude of weight updates that would otherwise overwrite Task A features. It also reduces the effective learning rate sensitivity, making fine-tuning on Task B less destructive to previously learned weights.
 
-**This is the most significant improvement we found beyond the original paper.** Adding BatchNorm to Maxout_Dropout (the best condition in the paper) could further reduce forgetting beyond what the paper reports. This would be worth investigating in future work.
+**Caveat:** These results are based on 4 trials per configuration, which is insufficient to establish statistical significance. The effect is consistent in direction but should be replicated with more trials before drawing strong conclusions. Adding BatchNorm to Maxout_Dropout could be a promising direction for future work.
 
 ---
 
@@ -87,6 +87,6 @@ The likely mechanism: BatchNorm normalizes activations layer by layer, which sta
 |---|---|---|---|
 | Dropout (0 -> 0.5) | Strong reduction | -58% | Yes — confirms paper |
 | Weight Decay (0 -> 1e-4) | Minor reduction | -7% | Optional |
-| BatchNorm (off -> on) | Moderate reduction | -31% | Yes — new finding |
+| BatchNorm (off -> on) | Moderate reduction (preliminary) | ~-31% | Promising — needs more trials |
 
 The ablations confirm that Dropout is the primary mechanism for forgetting resistance, consistent with the paper's conclusion. BatchNorm is a promising additional technique that could be combined with Dropout for further gains — a direction not explored in the original 2015 paper.
