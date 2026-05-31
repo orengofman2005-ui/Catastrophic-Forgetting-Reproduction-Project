@@ -27,8 +27,8 @@
 
 > *Can the central conclusions of Goodfellow et al. (2015) — the superiority of Dropout over SGD in preventing catastrophic forgetting, and the scenario-dependent ranking of activation functions — be reproduced in a modern PyTorch environment under consumer hardware constraints (8 trials instead of 25)?*
 
-**Answer: Yes, with high confidence across all 3 scenarios.**
-All 8 conditions rank correctly in all 3 scenarios compared to the paper's visual results.
+**Answer: Yes, with strong qualitative agreement across all 3 scenarios.**
+All major rankings are preserved; one minor reversal (Maxout SGD vs Maxout Dropout, Δ=0.001) in Scenario 3 is within sampling noise at 8 trials.
 
 ---
 

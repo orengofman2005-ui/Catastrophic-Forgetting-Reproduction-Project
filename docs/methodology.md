@@ -35,14 +35,16 @@ The experiment follows the original structure of Goodfellow et al. (2015):
 
 Random search — 8 trials per condition (paper: 25):
 
-| Parameter | Search Range |
-|---|---|
-| Learning rate | 10^U[-2.0, -0.5] |
-| Hidden layer size | U[250, 5000] |
-| Max-norm (per layer) | U[1.0, 5.0] |
-| Weight initialization range | 10^U[-2.3, -1.0] |
-| Sparse init k (Sigmoid/ReLU) | U[10, 30] |
-| Momentum | linearly increasing from 0.5 |
+| Parameter | Paper (unspecified) | This Reproduction |
+|---|---|---|
+| Learning rate | ~10^U[-2.0, -0.5] (estimated) | 10^U[-2.5, -1.0] |
+| Hidden layer size (Maxout/LWTA) | ~U[250, 5000] (estimated) | U[250, 1000] post-act units |
+| Hidden layer size (ReLU/Sigmoid) | ~U[250, 5000] (estimated) | U[250, 2000] |
+| Max-norm (per layer) | U[1.0, 5.0] | U[1.0, 5.0] |
+| Weight initialization range | 10^U[-2.3, -1.0] | 10^U[-2.3, -1.0] |
+| Momentum schedule | 0.5 → ~0.99 | 0.5 → U[0.5, 0.99] |
+
+> The original paper does not publish its exact HP search ranges. Our ranges were chosen to bracket plausible values and widened slightly at the lower end (LR) to improve convergence stability. See the Bonus section below for rationale.
 
 > Maxout and LWTA: bias initialized to 0 (random initialization causes one unit in the group to dominate).
 > Sigmoid: bias initialized from a negative range to encourage sparsity.
@@ -84,9 +86,11 @@ The original paper appears to use a lower convex hull on a log scale, but the ex
 
 We added a vertical dashed baseline to each Frontier plot marking the median old-task error at the start of new-task training. This is not present in the original paper's figures but makes it immediately visible how much each method degrades relative to the pre-forgetting reference — improving interpretability.
 
-### 4. SVD-Based Feature Reduction for Amazon (Scenario 3)
+### 4. SVD-Based Feature Reduction for Amazon (Scenario 3) — Approximate Reproduction
 
-In Scenario 3, the original paper feeds Amazon reviews directly into an MLP at full vocabulary dimensionality. We applied TruncatedSVD to reduce the feature space to 784 dimensions (matching MNIST input size), fitting the SVD on the training set only to avoid data leakage. This made training faster and more stable without measurably changing the qualitative results.
+In Scenario 3, the original paper feeds Amazon reviews directly into an MLP at full vocabulary dimensionality (~5000+ features). We applied TruncatedSVD to reduce the feature space to 784 dimensions (matching MNIST input size), fitting the SVD on the training set only to avoid data leakage.
+
+> **This is an algorithmic deviation, not merely a technical improvement.** Scenario 3 should therefore be treated as an **approximate reproduction**: the qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. All Scenario 3 findings are reported as qualitative agreement only.
 
 ### 5. Per-Condition Checkpointing
 

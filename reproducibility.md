@@ -84,14 +84,15 @@ This seed is applied once at startup in `final_experiment_repro.py` (module leve
 
 ## Runtime
 
-| Scenario | GPU Runtime | CPU Runtime (estimate) |
-|---|---|---|
-| Scenario 1 — Input Reformatting | ~3.5 hours | ~12 hours |
-| Scenario 2 — Similar Tasks (Amazon) | ~3 hours | ~10 hours |
-| Scenario 3 — Dissimilar Tasks | ~3 hours | ~10 hours |
-| **Total** | **~9.5 hours** | **~32 hours** |
+| Script | GPU Runtime | CPU Runtime (estimate) | Notes |
+|---|---|---|---|
+| Scenario 1 — Input Reformatting | ~3.5 hours | ~12 hours | 64 models |
+| Scenario 2 — Similar Tasks (Amazon) | ~3 hours | ~10 hours | 64 models |
+| Scenario 3 — Dissimilar Tasks | ~3 hours | ~10 hours | 64 models |
+| **Main experiment total** | **~9.5 hours** | **~32 hours** | |
+| Ablation study (`ablation_study.py`) | ~1.5 hours | ~5 hours | 4 trials × 8 configs |
 
-Runtimes are for 8 trials per condition (64 models total per scenario). With checkpointing enabled, interrupted runs resume automatically — no progress is lost.
+Runtimes are measured on GTX 1660 Super (6 GB VRAM). With checkpointing enabled, interrupted main-experiment runs resume automatically — no progress is lost. The ablation study has no checkpointing; if interrupted, it must be restarted from the beginning.
 
 ---
 
