@@ -53,7 +53,7 @@ from final_experiment_repro import (
 RESULTS_DIR = "results_repro"
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-N_TRIALS = 8          # trials per ablation config
+N_TRIALS = 4          # trials per ablation config
 MAX_EPOCHS = 150
 PATIENCE = 15
 

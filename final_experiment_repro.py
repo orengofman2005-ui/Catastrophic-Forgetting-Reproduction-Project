@@ -7,9 +7,9 @@ Faithful reproduction of:
   Goodfellow, Mirza, Xiao, Courville, Bengio (arXiv:1312.6211v3, 2015)
 
 Colab-ready version:
-  - שומר checkpoint אחרי כל condition (לא רק בסוף התרחיש)
-  - אם קורס באמצע — ממשיך אוטומטית מהמקום שנעצר
-  - progress bars בזמן אמת ב-CMD / Colab
+  - saves a checkpoint after every condition (not only at end of scenario)
+  - if it crashes mid-run — resumes automatically from where it stopped
+  - real-time progress bars in CMD / Colab
 """
 
 import os
@@ -32,7 +32,7 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 
 # =============================================================================
-# הגדרות בסיסיות
+# Basic settings
 # =============================================================================
 
 SEED = 42
@@ -47,15 +47,15 @@ torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
-TRIALS_PER_CONDITION = 8     # paper: 25 — מצומצם לסביבה ביתית (מכסה את מרחב ה-HP)
-PATIENCE_OLD = 15            # paper: 100 — מספיק עם LR/momentum שמתכנסים מהר
+TRIALS_PER_CONDITION = 8     # paper: 25 — reduced for home environment (covers HP space)
+PATIENCE_OLD = 15            # paper: 100 — sufficient with LR/momentum that converge quickly
 PATIENCE_NEW = 15
-MAX_EPOCHS_OLD = 150         # עם patience=15 כמעט אף מודל לא מגיע ל-150
+MAX_EPOCHS_OLD = 150         # with patience=15 almost no model reaches 150
 MAX_EPOCHS_NEW = 150
-BATCH_SIZE = 256             # GPU utilization טוב יותר; פחות batches → epoch מהיר
+BATCH_SIZE = 256             # better GPU utilization; fewer batches → faster epoch
 
-# סה"כ conditions: 4 activations × 2 algorithms = 8
-# סה"כ מודלים לתרחיש: 8 × 25 = 200
+# total conditions: 4 activations × 2 algorithms = 8
+# total models per scenario: 8 × 25 = 200
 TOTAL_CONDITIONS = 8
 TOTAL_MODELS_PER_SCENARIO = TOTAL_CONDITIONS * TRIALS_PER_CONDITION
 
@@ -404,7 +404,7 @@ def train_task1(model, train_ldr, val_ldr, optimizer, hp,
                 max_epochs=MAX_EPOCHS_OLD, patience=PATIENCE_OLD,
                 desc="Task1"):
     best_val, best_state, stale = float("inf"), {k: v.clone() for k, v in model.state_dict().items()}, 0
-    # progress bar על epochs — מתעדכן כל epoch
+    # progress bar over epochs — updated every epoch
     with tqdm(total=max_epochs, desc=f"    {desc}", unit="ep",
               leave=False, dynamic_ncols=True) as pbar:
         for epoch in range(max_epochs):
@@ -471,7 +471,7 @@ def run_hyperparameter_search(scenario_name, t1_train, t1_val, t1_test,
                                trials_per_condition=TRIALS_PER_CONDITION):
     all_results, trial_summaries, winning_models = {}, {}, {}
 
-    # progress bar ראשי — על כל המודלים בתרחיש
+    # main progress bar — over all models in the scenario
     total_models = TOTAL_CONDITIONS * trials_per_condition
     main_bar = tqdm(total=total_models, desc=f"[{scenario_name}] total models",
                     unit="model", dynamic_ncols=True, colour="green")
@@ -495,7 +495,7 @@ def run_hyperparameter_search(scenario_name, t1_train, t1_val, t1_test,
             best_joint_global, best_param_count = float("inf"), 0
             trials = []
 
-            # progress bar שני — על ה-trials בתוך condition
+            # secondary progress bar — over the trials within a condition
             trial_bar = tqdm(range(trials_per_condition),
                              desc=f"  {label}", unit="trial",
                              leave=False, dynamic_ncols=True)
