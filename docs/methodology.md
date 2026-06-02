@@ -130,7 +130,7 @@ The original paper feeds Amazon review bag-of-words vectors at full vocabulary s
 
 **Stage 1 — Shared vocabulary (`prepare_amazon_npz.py`):** A `DictVectorizer` is fit on the union of all four Amazon categories, keeping the top-5000 features by corpus frequency. Fitting on all categories together ensures consistent feature indices across books, dvd, electronics, and kitchen — required for cross-category evaluation in Scenario 3.
 
-**Stage 2 — TruncatedSVD (`final_experiment_repro.py`):** The 5000-dimensional vectors are further reduced to 784 dimensions using `TruncatedSVD`, fit **on training data only** to prevent data leakage. 784 matches the MNIST input size, enabling a fair architectural comparison across scenarios.
+**Stage 2 — TruncatedSVD (`final_experiment_repro.py`, Scenario 3 only):** In Scenario 3, the 5000-dimensional vectors are further reduced to 784 dimensions using `TruncatedSVD`, fit **on training data only** to prevent data leakage. 784 matches the MNIST input size, which is required because Scenario 3 trains on MNIST (784) and tests on Amazon — the two tasks must share the same input dimension. Scenario 2 uses the 5000-dimensional vectors directly, since both tasks (Kitchen and DVD) are already the same dimension.
 
 > **Caveat:** Because this changes the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
 
