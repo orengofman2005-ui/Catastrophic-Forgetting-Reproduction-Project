@@ -272,33 +272,7 @@ See [`docs/ablation.md`](docs/ablation.md) for full analysis and interpretation.
 
 ---
 
-### Improvement 2 — Statistical Error Bars (New Visualization)
-
-> **Category:** Improved data presentation
-> **File:** [`plot_results.py`](plot_results.py) — function `plot_errorbars()` · **Output:** `results_repro/fig_s*_errorbars.png`
-
-The original paper reports only the best_joint score per condition, with no measure of variance across trials. We added mean ± std error bar figures for all 3 scenarios, making it possible to see whether differences between conditions are within or outside sampling noise.
-
-This is especially relevant given that we used 8 trials instead of the paper's 25 — error bars make the reduced statistical power explicit and honest.
-
-| Scenario 1 | Scenario 2 | Scenario 3 |
-|---|---|---|
-| <img src="results_repro/fig_s1_errorbars.png" width="300"/> | <img src="results_repro/fig_s3_errorbars.png" width="300"/> | <img src="results_repro/fig_s5_errorbars.png" width="300"/> |
-
----
-
-### Improvement 3 — Baseline Reference Line on Frontier Plots
-
-> **Category:** Improved data presentation
-> **File:** [`plot_results.py`](plot_results.py) — `baseline_x` parameter in `plot_frontier()`
-
-Each Frontier plot now includes a vertical dashed line marking the median old-task error at the start of new-task training (before any forgetting occurs). This reference is absent from the original paper's figures.
-
-**Why it helps:** Without the baseline, the Frontier curves show only relative differences between methods. The baseline makes visible how much each method degrades in absolute terms — a reader can immediately see "by how much did this method forget?" rather than only "which method forgot less?".
-
----
-
-### Improvement 4 — Monotonic Pareto Frontier (Methodological Refinement)
+### Improvement 2 — Monotonic Pareto Frontier (Methodological Refinement)
 
 > **Category:** Alternative analysis approach
 > **File:** [`final_experiment_repro.py`](final_experiment_repro.py) — function `pareto_lower_left()`
@@ -309,7 +283,7 @@ The original paper uses a lower convex hull on log scale to draw the Frontier cu
 
 ---
 
-### Improvement 5 — Shared Vocabulary Feature Selection for Amazon Reviews
+### Improvement 3 — Shared Vocabulary Feature Selection for Amazon Reviews
 
 > **Category:** Data processing optimization
 > **File:** [`prepare_amazon_npz.py`](prepare_amazon_npz.py) — `build_shared_vectorizer()` · **Docs:** [`docs/methodology.md`](docs/methodology.md)

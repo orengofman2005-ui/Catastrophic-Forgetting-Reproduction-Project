@@ -69,16 +69,6 @@ def get_frontier_points(trial_summaries: Dict[str, List[dict]]) -> Dict[str, np.
     return frontier_points
 
 
-def get_baseline_error(trial_summaries: Dict[str, List[dict]]) -> float:
-    """Median old-task error at epoch 0 of new-task training — pre-forgetting reference."""
-    baselines = []
-    for trials in trial_summaries.values():
-        for t in trials:
-            if t["points"]:
-                baselines.append(t["points"][0][0])
-    return float(np.median(baselines)) if baselines else None
-
-
 # Axis limits per scenario to prevent overcrowding (especially Scenario 2 / Amazon)
 AXIS_LIMITS = {
     1: dict(xlim=None, ylim=None),
@@ -121,14 +111,6 @@ def plot_frontier_from_all_trials(
         ax.set_ylim(limits["ylim"])
     else:
         ax.margins(0.1)
-
-    baseline = get_baseline_error(trial_summaries)
-    if baseline is not None:
-        ax.axvline(
-            x=baseline, color="dimgray", linestyle=":",
-            linewidth=1.8, alpha=0.7,
-            label=f"Baseline (Task A error = {baseline:.3f})",
-        )
 
     ax.legend(bbox_to_anchor=(1.02, 1.0), loc="upper left",
               frameon=True, fontsize=10, borderpad=0.8)
@@ -173,59 +155,6 @@ def plot_winning_model_sizes(
     plt.close(fig)
 
 
-def plot_best_joint_with_errorbars(
-    trial_summaries: Dict[str, List[dict]],
-    title: str,
-    save_path: str,
-):
-    """
-    Bar chart of mean best_joint per condition with ± std error bars.
-    best_joint per trial = minimum (old_error + new_error) achieved during Task 2 training.
-    """
-    cond_names = list(trial_summaries.keys())
-    means, stds = [], []
-
-    for cond in cond_names:
-        trials = trial_summaries[cond]
-        per_trial_bj = []
-        for t in trials:
-            if t["points"]:
-                pts = np.array(t["points"])
-                joint = pts[:, 0] + pts[:, 1]
-                per_trial_bj.append(float(np.min(joint)))
-        if per_trial_bj:
-            means.append(float(np.mean(per_trial_bj)))
-            stds.append(float(np.std(per_trial_bj)))
-        else:
-            means.append(0.0)
-            stds.append(0.0)
-
-    colors = [STYLE_MAP.get(c, {"color": "gray"})["color"] for c in cond_names]
-    labels = [STYLE_MAP.get(c, {"label": c})["label"] for c in cond_names]
-
-    fig, ax = plt.subplots(figsize=(11, 6))
-    x = np.arange(len(cond_names))
-    bars = ax.bar(x, means, yerr=stds, capsize=5,
-                  color=colors, alpha=0.85,
-                  error_kw={"elinewidth": 1.8, "ecolor": "black"})
-
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=10)
-    ax.set_ylabel("Best Joint Error (mean ± std across trials)", fontsize=11)
-    ax.set_title(title, fontsize=13, pad=12)
-    ax.grid(axis="y", linestyle="--", alpha=0.4)
-
-    for bar, m, s in zip(bars, means, stds):
-        ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + s + 0.005,
-                f"{m:.3f}", ha="center", va="bottom", fontsize=8)
-
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close(fig)
-    print(f"Saved: {save_path}")
-
-
 if __name__ == "__main__":
     scenario_titles = {
         1: "Scenario 1: Reformatting Task (MNIST)",
@@ -255,13 +184,6 @@ if __name__ == "__main__":
             data["winning_models"],
             f"Scenario {label_num}: Parameter Count of Winning Models",
             os.path.join(RESULTS_DIR, f"fig_s{i}_params.png"),
-        )
-
-        # Error bars figure (new)
-        plot_best_joint_with_errorbars(
-            data["trial_summaries"],
-            f"Scenario {label_num}: Best Joint Error — Mean ± Std (across {len(list(data['trial_summaries'].values())[0])} trials)",
-            os.path.join(RESULTS_DIR, f"fig_s{i}_errorbars.png"),
         )
 
         print(f"Plotted scenario {i}")

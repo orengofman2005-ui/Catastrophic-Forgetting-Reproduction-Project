@@ -90,28 +90,7 @@ This extends the paper's qualitative claim with quantitative evidence for the me
 
 ---
 
-### Improvement 2 — Statistical Error Bars
-
-**Code:** `plot_results.py` — function `plot_errorbars()`
-**Output:** `results_repro/fig_s*_errorbars.png`
-
-The original paper reports a single best_joint score per condition, with no variance measure. We compute mean ± std across all 8 trials and plot error bar figures for all 3 scenarios.
-
-This is especially important given our reduced trial count (8 vs. paper's 25): the error bars make the statistical uncertainty explicit rather than hiding it.
-
----
-
-### Improvement 3 — Baseline Reference Line on Frontier Plots
-
-**Code:** `plot_results.py` — `baseline_x` parameter in `plot_frontier()`
-
-Each Frontier plot includes a vertical dashed line marking the median old-task error at the start of new-task training (before any forgetting occurs). The original paper's figures do not include this reference.
-
-Without it, the Frontier only shows relative differences between methods. With it, a reader can immediately quantify absolute degradation: "Maxout+Dropout degrades by X% from the pre-forgetting baseline."
-
----
-
-### Improvement 4 — Monotonic Pareto Frontier
+### Improvement 2 — Monotonic Pareto Frontier
 
 **Code:** `final_experiment_repro.py` — function `pareto_lower_left()`
 
@@ -121,7 +100,7 @@ A convex hull can include dominated points when the point cloud has concave regi
 
 ---
 
-### Improvement 5 — Shared Vocabulary Feature Selection for Amazon Reviews
+### Improvement 3 — Shared Vocabulary Feature Selection for Amazon Reviews
 
 **Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` · `final_experiment_repro.py` — `get_amazon_from_npz()`, `get_padded_binary_mnist_loaders()`
 
