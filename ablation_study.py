@@ -57,7 +57,7 @@ PATIENCE = 15
 
 
 # =============================================================================
-# Ablation MLP — supports optional BatchNorm and configurable Dropout
+# Ablation MLP — supports configurable Dropout and weight decay
 # =============================================================================
 
 class AblationMLP(nn.Module):
