@@ -61,7 +61,7 @@ All major rankings are preserved; one minor reversal (Maxout SGD vs Maxout Dropo
 ├── final_experiment_repro.py   # Main experiment — all 3 scenarios, full HP search
 ├── plot_results.py             # Generate Frontier, model-size, and error-bar figures
 ├── prepare_amazon_npz.py       # Preprocess Amazon Reviews -> .npz files
-├── ablation_study.py           # Ablation: Dropout rate / Weight decay / BatchNorm
+├── ablation_study.py           # Ablation: Dropout rate / Weight decay
 ├── requirements.txt            # Python dependencies
 │
 ├── docs/
@@ -170,7 +170,6 @@ python ablation_study.py
 Produces in `results_repro/`:
 - `ablation_dropout.png` — Effect of dropout rate on forgetting
 - `ablation_wd.png` — Effect of weight decay on forgetting
-- `ablation_batchnorm.png` — Effect of BatchNorm on forgetting (bonus)
 
 ---
 
@@ -190,7 +189,8 @@ After a complete run, `results_repro/` should contain:
 | `fig_s5_frontier.png` | Reproduces paper Figure 5 |
 | `fig_s5_params.png` | Reproduces paper Figure 6 |
 | `fig_s*_errorbars.png` | Error bar figures (not in original paper) |
-| `ablation_*.png` | Ablation figures (not in original paper) |
+| `ablation_dropout.png` | Dropout rate ablation figure |
+| `ablation_wd.png` | Weight decay ablation figure |
 | `ablation_results.pt` | Raw ablation data |
 
 ---
@@ -218,9 +218,6 @@ Beyond reproduction, we ran controlled ablation experiments to isolate the mecha
 | Dropout p=0.2 | 0.142 ± 0.031 | -33% |
 | Dropout p=0.5 | **0.089 ± 0.021** | **-58%** |
 | + Weight Decay 1e-4 | 0.083 ± 0.019 | -7% additional |
-| + BatchNorm | **0.061 ± 0.015** | **-31% additional** |
-
-BatchNorm (not in the original 2015 paper) further reduces forgetting by 31% on top of Dropout alone — a new finding from this project.
 
 See [docs/ablation.md](docs/ablation.md) for full analysis.
 

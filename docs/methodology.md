@@ -97,3 +97,14 @@ In Scenario 3, the original paper feeds Amazon reviews directly into an MLP at f
 The original paper gives no indication of how runs were managed. We added automatic per-condition checkpointing so that if training is interrupted (e.g., power loss, kernel crash), it resumes from the last completed condition rather than from scratch. This is particularly valuable given the 6–12 hour runtime.
 
 **Note on bonus outcomes:** Improvements 3–5 are clearly beneficial (cleaner visualization, no leakage, robustness). Improvements 1–2 produced modest qualitative gains consistent with the paper's conclusions. No improvement reversed or contradicted any finding from the original paper.
+
+---
+
+## Ablation Study
+
+Beyond reproduction, we ran controlled ablation experiments to isolate the mechanisms behind Dropout's forgetting resistance. Two ablations were performed on Scenario 1 (Permuted MNIST):
+
+1. **Dropout Rate** — comparing p=0.0, 0.2, and 0.5 (paper value)
+2. **Weight Decay** — comparing none, 1e-4, and 1e-3
+
+See [ablation.md](ablation.md) for full results and interpretation.

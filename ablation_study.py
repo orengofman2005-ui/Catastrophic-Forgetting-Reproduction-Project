@@ -4,10 +4,9 @@ ablation_study.py
 Ablation experiments on Scenario 1 (Permuted MNIST) to isolate the contribution
 of individual components to catastrophic forgetting resistance.
 
-Three ablations are run:
+Two ablations are run:
   1. Dropout rate: 0.0, 0.2, 0.5 (paper value)
   2. Weight decay: none, 1e-4, 1e-3
-  3. BatchNorm: without vs with (bonus improvement)
 
 For each configuration we run N_TRIALS trials with random HP search,
 record best_joint and forgetting rate, and report mean ± std.
@@ -23,7 +22,6 @@ Output:
   results_repro/ablation_results.pt   — raw results
   results_repro/ablation_dropout.png  — dropout ablation figure
   results_repro/ablation_wd.png       — weight decay ablation figure
-  results_repro/ablation_batchnorm.png — batchnorm ablation figure
 """
 
 import os
@@ -65,12 +63,11 @@ PATIENCE = 15
 class AblationMLP(nn.Module):
     """
     Two-hidden-layer MLP with ReLU activation.
-    Supports configurable dropout rates and optional BatchNorm.
+    Supports configurable dropout rates.
     """
     def __init__(self, input_dim, hidden_dim, output_dim,
-                 p_input=0.2, p_hidden=0.5, use_batchnorm=False):
+                 p_input=0.2, p_hidden=0.5):
         super().__init__()
-        self.use_batchnorm = use_batchnorm
 
         self.drop_in  = nn.Dropout(p_input)  if p_input  > 0 else nn.Identity()
         self.drop_hid = nn.Dropout(p_hidden) if p_hidden > 0 else nn.Identity()
@@ -78,12 +75,6 @@ class AblationMLP(nn.Module):
         self.fc1 = nn.Linear(input_dim,  hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, output_dim)
-
-        if use_batchnorm:
-            self.bn1 = nn.BatchNorm1d(hidden_dim)
-            self.bn2 = nn.BatchNorm1d(hidden_dim)
-        else:
-            self.bn1 = self.bn2 = nn.Identity()
 
         self.act = nn.ReLU()
         self._init_weights()
@@ -95,8 +86,8 @@ class AblationMLP(nn.Module):
 
     def forward(self, x):
         x = self.drop_in(x)
-        x = self.drop_hid(self.act(self.bn1(self.fc1(x))))
-        x = self.drop_hid(self.act(self.bn2(self.fc2(x))))
+        x = self.drop_hid(self.act(self.fc1(x)))
+        x = self.drop_hid(self.act(self.fc2(x)))
         return self.fc3(x)
 
 
@@ -249,6 +240,7 @@ def ablation_weight_decay():
                           weight_decay=wd)
             model = AblationMLP(784, hp.hidden_dim, 10,
                                 p_input=0.2, p_hidden=0.5).to(DEVICE)
+
             bj, forg = run_sequential(model, t1_tr, t1_va, t1_te,
                                       t2_tr, t2_va, t2_te, hp)
             joints.append(bj)
@@ -264,48 +256,6 @@ def ablation_weight_decay():
               f"forgetting={np.mean(forgettings):.3f}±{np.std(forgettings):.3f}")
 
     return results, wd_values
-
-
-# =============================================================================
-# Ablation 3: BatchNorm (Bonus)
-# =============================================================================
-
-def ablation_batchnorm():
-    """Compare without BatchNorm vs with BatchNorm on Scenario 1."""
-    rng = np.random.default_rng(SEED + 200)
-    perm1 = torch.from_numpy(rng.permutation(784))
-    perm2 = torch.from_numpy(rng.permutation(784))
-
-    t1_tr, t1_va, t1_te = get_permuted_mnist_loaders(perm1)
-    t2_tr, t2_va, t2_te = get_permuted_mnist_loaders(perm2)
-
-    results = {}
-    for use_bn in [False, True]:
-        label = "BatchNorm=On" if use_bn else "BatchNorm=Off"
-        joints, forgettings = [], []
-
-        for trial in tqdm(range(N_TRIALS), desc=label, leave=False):
-            set_seed(SEED + trial + 400)
-            hp = _make_hp(hidden_dim=random.randint(256, 1024),
-                          lr=10 ** random.uniform(-2.5, -1.0))
-            model = AblationMLP(784, hp.hidden_dim, 10,
-                                p_input=0.2, p_hidden=0.5,
-                                use_batchnorm=use_bn).to(DEVICE)
-            bj, forg = run_sequential(model, t1_tr, t1_va, t1_te,
-                                      t2_tr, t2_va, t2_te, hp)
-            joints.append(bj)
-            forgettings.append(forg)
-
-        results[label] = {
-            "best_joint_mean": float(np.mean(joints)),
-            "best_joint_std":  float(np.std(joints)),
-            "forgetting_mean": float(np.mean(forgettings)),
-            "forgetting_std":  float(np.std(forgettings)),
-        }
-        print(f"{label}: best_joint={np.mean(joints):.3f}±{np.std(joints):.3f}  "
-              f"forgetting={np.mean(forgettings):.3f}±{np.std(forgettings):.3f}")
-
-    return results
 
 
 # =============================================================================
@@ -351,16 +301,10 @@ if __name__ == "__main__":
     print("=" * 60)
     wd_results, wd_vals = ablation_weight_decay()
 
-    print("\n" + "=" * 60)
-    print("Ablation 3: BatchNorm (Bonus)")
-    print("=" * 60)
-    bn_results = ablation_batchnorm()
-
     # Save all raw results
     torch.save({
         "dropout": do_results,
         "weight_decay": wd_results,
-        "batchnorm": bn_results,
     }, os.path.join(RESULTS_DIR, "ablation_results.pt"))
 
     # --- Plot dropout ablation ---
@@ -385,18 +329,6 @@ if __name__ == "__main__":
         title="Ablation 2: Effect of Weight Decay on Forgetting",
         save_path=os.path.join(RESULTS_DIR, "ablation_wd.png"),
         color="tomato",
-    )
-
-    # --- Plot batchnorm ablation ---
-    bn_labels = list(bn_results.keys())
-    bn_forg_means = [bn_results[l]["forgetting_mean"] for l in bn_labels]
-    bn_forg_stds  = [bn_results[l]["forgetting_std"]  for l in bn_labels]
-    _plot_ablation_bars(
-        bn_labels, bn_forg_means, bn_forg_stds,
-        ylabel="Forgetting Rate (old-task error increase)",
-        title="Ablation 3 (Bonus): Effect of BatchNorm on Forgetting",
-        save_path=os.path.join(RESULTS_DIR, "ablation_batchnorm.png"),
-        color="mediumseagreen",
     )
 
     print("\nAll ablation experiments complete.")

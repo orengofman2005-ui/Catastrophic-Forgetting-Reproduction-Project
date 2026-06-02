@@ -60,33 +60,11 @@ Weight decay shows a **non-monotonic** relationship with forgetting. A small amo
 
 ---
 
-## Ablation 3: BatchNorm (Bonus Experiment)
-
-As a bonus beyond the original paper's scope, we tested whether BatchNorm reduces catastrophic forgetting. BatchNorm was not part of the original paper (published in 2015, the same year as the BatchNorm paper).
-
-| Configuration | Best Joint (mean ± std) | Forgetting Rate (mean ± std) |
-|---|---|---|
-| Without BatchNorm | 0.049 ± 0.012 | 0.089 ± 0.021 |
-| With BatchNorm | **0.038 ± 0.009** | **0.061 ± 0.015** |
-
-![BatchNorm Ablation](../results_repro/ablation_batchnorm.png)
-
-### Interpretation
-
-With only 4 trials per configuration, this result is preliminary. BatchNorm **suggests** a reduction in forgetting of approximately **31%** compared to the same network without it. This direction is worth investigating further; the effect size should be treated with caution at this sample size.
-
-The likely mechanism: BatchNorm normalizes activations layer by layer, which stabilizes the internal representation space and reduces the magnitude of weight updates that would otherwise overwrite Task A features. It also reduces the effective learning rate sensitivity, making fine-tuning on Task B less destructive to previously learned weights.
-
-**Caveat:** These results are based on 4 trials per configuration, which is insufficient to establish statistical significance. The effect is consistent in direction but should be replicated with more trials before drawing strong conclusions. Adding BatchNorm to Maxout_Dropout could be a promising direction for future work.
-
----
-
 ## Ablation Summary
 
 | Component | Effect on Forgetting | Effect Size | Recommended |
 |---|---|---|---|
 | Dropout (0 -> 0.5) | Strong reduction | -58% | Yes — confirms paper |
 | Weight Decay (0 -> 1e-4) | Minor reduction | -7% | Optional |
-| BatchNorm (off -> on) | Moderate reduction (preliminary) | ~-31% | Promising — needs more trials |
 
-The ablations confirm that Dropout is the primary mechanism for forgetting resistance, consistent with the paper's conclusion. BatchNorm is a promising additional technique that could be combined with Dropout for further gains — a direction not explored in the original 2015 paper.
+The ablations confirm that Dropout is the primary mechanism for forgetting resistance, consistent with the paper's conclusion. Weight decay provides a small additional benefit but is not essential.
