@@ -6,9 +6,7 @@ We were looking for a paper that met three conditions: published in a recognized
 
 We came across Goodfellow et al. (2015) while searching for papers on continual learning. What caught our attention was that the paper directly pits several well-known techniques against each other — Sigmoid, ReLU, Maxout, LWTA, SGD, Dropout — in a controlled comparison. Most papers we found either proposed a new method without a fair baseline comparison, or used proprietary datasets we had no access to.
 
-The second reason we chose this paper is that catastrophic forgetting felt like a genuinely surprising and counterintuitive phenomenon. The idea that a neural network can completely "forget" a task it already learned, just by training on something new, was something none of us had encountered before. That made it worth understanding deeply.
-
-The third reason is practical: the paper uses MNIST (freely available, small, fast to train on) and Amazon product reviews (also public). We estimated that with a consumer GPU we could actually run the experiments in a reasonable time frame, which turned out to be true — though with some adjustments to the number of trials (8 instead of 25) due to hardware limits.
+The second reason is practical: the paper uses MNIST (freely available, small, fast to train on) and Amazon product reviews (also public). We estimated that with a consumer GPU we could actually run the experiments in a reasonable time frame, which turned out to be true — though with some adjustments to the number of trials (8 instead of 25) due to hardware limits.
 
 ---
 
