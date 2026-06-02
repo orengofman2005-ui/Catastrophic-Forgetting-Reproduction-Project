@@ -67,9 +67,7 @@ Random search — 8 trials per condition (paper: 25):
 
 > **Scenario 3 implementation note:** MNIST and Amazon Reviews have incompatible input sizes (784 vs. 5000+). To share a single input layer across both tasks, we apply `TruncatedSVD` to the Amazon feature vectors, reducing them from 5000 to 784 dimensions — matching MNIST exactly. The SVD is fit on the Amazon **training set only** to prevent data leakage. This means Scenario 3 absolute error values are not directly comparable to the paper, but the ranking of methods across all 8 conditions remains valid.
 
-## Note on Patience Bias
-
-A critical deviation to highlight: reducing patience from 100 to 15 epochs is not neutral — it creates a **systematic bias against Dropout**. Dropout methods generally converge more slowly than SGD (due to the noise introduced by the dropout mechanism into the gradients). As a result, short patience gives a relative advantage to SGD and may suppress the apparent superiority of Dropout. This means the findings on Dropout superiority in this reproduction are **conservative** — under full patience (100 epochs), the performance gap is expected to be larger, not smaller.
+> **Note on Patience Bias:** Reducing patience from 100 to 15 epochs is not neutral — it creates a **systematic bias against Dropout**. Dropout methods generally converge more slowly than SGD (due to the noise introduced by the dropout mechanism into the gradients). As a result, short patience gives a relative advantage to SGD and may suppress the apparent superiority of Dropout. This means the findings on Dropout superiority in this reproduction are **conservative** — under full patience (100 epochs), the performance gap is expected to be larger, not smaller.
 
 ## Checkpoint and Resume
 
