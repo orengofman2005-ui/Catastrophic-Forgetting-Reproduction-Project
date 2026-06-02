@@ -121,18 +121,15 @@ A convex hull can include dominated points when the point cloud has concave regi
 
 ---
 
-### Improvement 5 — Two-Stage Feature Reduction for Amazon Reviews (Scenario 3)
+### Improvement 5 — Shared Vocabulary Feature Selection for Amazon Reviews
 
-**Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` · `final_experiment_repro.py` — `get_amazon_reduced()`
-**Note:** This is an algorithmic deviation — see caveat below.
+**Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` · `final_experiment_repro.py` — `get_amazon_from_npz()`, `get_padded_binary_mnist_loaders()`
 
-The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We apply two stages of dimensionality reduction:
+The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We match this approach as closely as possible:
 
 **Stage 1 — Shared vocabulary (`prepare_amazon_npz.py`):** A `DictVectorizer` is fit on the union of all four Amazon categories, keeping the top-5000 features by corpus frequency. Fitting on all categories together ensures consistent feature indices across books, dvd, electronics, and kitchen — required for cross-category evaluation in Scenario 3.
 
-**Stage 2 — TruncatedSVD (`final_experiment_repro.py`, Scenario 3 only):** In Scenario 3, the 5000-dimensional vectors are further reduced to 784 dimensions using `TruncatedSVD`, fit **on training data only** to prevent data leakage. 784 matches the MNIST input size, which is required because Scenario 3 trains on MNIST (784) and tests on Amazon — the two tasks must share the same input dimension. Scenario 2 uses the 5000-dimensional vectors directly, since both tasks (Kitchen and DVD) are already the same dimension.
-
-> **Caveat:** Because this changes the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
+**Stage 2 — Zero-padding MNIST (`final_experiment_repro.py`, Scenario 3 only):** In Scenario 3, MNIST images (784 pixels) are zero-padded to 5000 dimensions to match Amazon's feature size — the same approach the original paper used. The first 784 values are pixel intensities; positions 784–4999 are always zero. Both tasks share a 5000-dimensional input layer. Scenario 2 uses the 5000-dimensional Amazon vectors directly, since both tasks (Kitchen and DVD) already share the same dimension.
 
 ---
 
