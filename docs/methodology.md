@@ -121,18 +121,18 @@ A convex hull can include dominated points when the point cloud has concave regi
 
 ---
 
-### Improvement 5 — Shared Vocabulary Feature Selection for Amazon Reviews (Scenario 3)
+### Improvement 5 — Two-Stage Feature Reduction for Amazon Reviews (Scenario 3)
 
-**Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` and `vectorize_category()`
+**Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` · `final_experiment_repro.py` — `get_amazon_reduced()`
 **Note:** This is an algorithmic deviation — see caveat below.
 
-The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We fit a shared `DictVectorizer` on the union of all four Amazon categories, then keep only the top-5000 features by corpus frequency.
+The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We apply two stages of dimensionality reduction:
 
-Two key design decisions:
-1. **Shared vocabulary across categories** — the feature indices are identical for books, dvd, electronics, and kitchen. This is required for Scenario 3, where the model is trained on one category and evaluated on another. Without a shared vocabulary, input dimensions would be incompatible.
-2. **Top-5000 by frequency** — rare vocabulary terms add noise without useful signal. Restricting to the 5000 most common features reduces input dimensionality and speeds up HP search significantly.
+**Stage 1 — Shared vocabulary (`prepare_amazon_npz.py`):** A `DictVectorizer` is fit on the union of all four Amazon categories, keeping the top-5000 features by corpus frequency. Fitting on all categories together ensures consistent feature indices across books, dvd, electronics, and kitchen — required for cross-category evaluation in Scenario 3.
 
-> **Caveat:** Because this restricts the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
+**Stage 2 — TruncatedSVD (`final_experiment_repro.py`):** The 5000-dimensional vectors are further reduced to 784 dimensions using `TruncatedSVD`, fit **on training data only** to prevent data leakage. 784 matches the MNIST input size, enabling a fair architectural comparison across scenarios.
+
+> **Caveat:** Because this changes the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
 
 ---
 

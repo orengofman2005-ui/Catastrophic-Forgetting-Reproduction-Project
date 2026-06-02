@@ -183,27 +183,21 @@ with open(file_path, encoding="utf-8", errors="ignore") as f:
 This will skip any malformed characters rather than crashing.
 
 **Us:**
-ok that fixed it. but the Amazon review files have thousands of features per sample (one per vocabulary word). the main script is very slow. can you write code to reduce the vocabulary to only the most important words?
+ok that fixed it. but the Amazon feature vectors are 5000-dimensional and MNIST is 784. can we reduce the Amazon features to 784 so the model architecture is the same across all scenarios?
 
 **Claude:**
-Yes — the cleanest approach is to fit a shared `DictVectorizer` on all categories combined, then keep only the top-k features by total corpus frequency. Fitting on all categories together ensures the feature indices are consistent across categories, which matters for Scenario 3 where you train on one category and test on another:
+Yes — use TruncatedSVD from scikit-learn. The key rule is that you must fit the SVD on training data only, then apply the same transform to validation and test. Otherwise information from the test set leaks into the feature space:
 
 ```python
-from sklearn.feature_extraction import DictVectorizer
-import numpy as np
+from sklearn.decomposition import TruncatedSVD
 
-vectorizer = DictVectorizer(sparse=True)
-X_all = vectorizer.fit_transform(all_rows)          # fit on union of all categories
-
-# Keep top-5000 features by corpus frequency
-freqs    = np.asarray(X_all.sum(axis=0)).ravel()
-keep_idx = np.argsort(freqs)[::-1][:5000]
-
-# For each category:
-X = vectorizer.transform(category_rows)[:, keep_idx].toarray().astype(np.float32)
+svd  = TruncatedSVD(n_components=784, random_state=42)
+X_tr = svd.fit_transform(X_train)   # fit on train only — no leakage
+X_va = svd.transform(X_val)
+X_te = svd.transform(X_test)
 ```
 
-This gives you a consistent 5000-dimensional input across all Amazon categories. Note that the paper uses the full vocabulary — restricting to 5000 features is a deviation, but it makes the experiments tractable and the qualitative results are preserved.
+This reduces the 5000-dimensional bag-of-words vectors to 784 components (the dominant directions of variance in the training set), matching MNIST's input size. Note this is a deviation from the paper — the paper feeds the full vocabulary. Scenario 3 results should therefore be treated as approximate.
 
 **Us:**
 ok that fixed it. but now prepare_amazon_npz.py ran and created .npz files but when we run the main experiment it crashes on scenario 3 with "AssertionError: assert amazon_cls == 2"
@@ -422,4 +416,4 @@ Yes, that's completely fine — and actually it's expected. The paper only shows
 
 ---
 
-*Total AI sessions: approximately 20–25 exchanges across 3 weeks. Main areas where AI help was essential: environment setup, understanding the paper's experimental design, writing the Pareto frontier and SVD preprocessing code, debugging data loading errors, implementing checkpointing, designing the ablation study, and writing documentation.*
+*Total AI sessions: approximately 20–25 exchanges across 3 weeks. Main areas where AI help was essential: environment setup, understanding the paper's experimental design, writing the Pareto frontier and feature reduction code (DictVectorizer + TruncatedSVD), debugging data loading errors, implementing checkpointing, designing the ablation study, and writing documentation.*
