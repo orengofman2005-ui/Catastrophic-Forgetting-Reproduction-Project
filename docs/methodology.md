@@ -100,15 +100,4 @@ A convex hull can include dominated points when the point cloud has concave regi
 
 ---
 
-### Improvement 3 — Shared Vocabulary Feature Selection for Amazon Reviews
-
-**Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` · `final_experiment_repro.py` — `get_amazon_from_npz()`, `get_padded_binary_mnist_loaders()`
-
-The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We match this approach as closely as possible:
-
-**Stage 1 — Shared vocabulary (`prepare_amazon_npz.py`):** A `DictVectorizer` is fit on the union of all four Amazon categories, keeping the top-5000 features by corpus frequency. Fitting on all categories together ensures consistent feature indices across books, dvd, electronics, and kitchen — required for cross-category evaluation in Scenario 3.
-
-**Stage 2 — Zero-padding MNIST (`final_experiment_repro.py`, Scenario 3 only):** In Scenario 3, MNIST images (784 pixels) are zero-padded to 5000 dimensions to match Amazon's feature size — the same approach the original paper used. The first 784 values are pixel intensities; positions 784–4999 are always zero. Both tasks share a 5000-dimensional input layer. Scenario 2 uses the 5000-dimensional Amazon vectors directly, since both tasks (Kitchen and DVD) already share the same dimension.
-
----
 

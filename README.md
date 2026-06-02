@@ -283,16 +283,6 @@ The original paper uses a lower convex hull on log scale to draw the Frontier cu
 
 ---
 
-### Improvement 3 — Shared Vocabulary Feature Selection for Amazon Reviews
-
-> **Category:** Data processing optimization
-> **File:** [`prepare_amazon_npz.py`](prepare_amazon_npz.py) — `build_shared_vectorizer()` · **Docs:** [`docs/methodology.md`](docs/methodology.md)
-
-The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We fit a shared `DictVectorizer` on the union of all four Amazon categories and keep only the top-5000 features by corpus frequency. For Scenario 3, MNIST images are zero-padded from 784 to 5000 dimensions to match — the same approach used in the original paper.
-
-**Why it's an improvement:** A shared vocabulary ensures consistent feature indices across all Amazon categories, which is required for cross-category evaluation. Restricting to the 5000 most frequent features removes rare-word noise and speeds up HP search.
-
----
 
 ## Documentation
 
