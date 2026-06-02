@@ -112,6 +112,16 @@ Scenarios 1 and 3 show strong qualitative agreement. Numerical deviations are mi
 
 One notable difference: in Scenario 3, Maxout_SGD (0.170) marginally outperforms Maxout_Dropout (0.171). The paper shows Dropout variants consistently better. This is likely a sampling artifact from 8 trials — a difference of 0.001 is within noise. With more trials, we would expect Dropout to pull ahead.
 
+### Why Model Sizes Differ from the Paper
+
+The model size figures (Fig2, Fig4, Fig6) show the most visible divergence from the original paper. The root cause is that model size is determined by the **single best trial** per condition — the one with the lowest joint validation error among 8 random HP draws. With only 8 trials, this selection is highly sensitive to which configurations happened to be sampled.
+
+Specifically:
+- **Hidden layer size** is sampled uniformly from a wide range (250–2000 units). Whether the winning trial happened to land on a large or small network is largely random at 8 draws.
+- With 25 trials (as in the paper), the winning model is more representative of the true optimum for that condition. With 8 trials, a lucky small model can win over a lucky large one simply due to sampling variance.
+
+**This does not affect the Frontier figures**, because the Frontier uses all 8 trials' points — the aggregate picture is robust even with fewer trials. Model sizes, by contrast, reflect a single selected model and are therefore not reliably reproducible at reduced trial counts.
+
 ### Summary
 
 | Scenario | Qualitative Match | Largest Deviation | Primary Cause |
@@ -140,7 +150,7 @@ The gray dashed vertical line = median old-task error at the start of new-task t
 
 Both figures correspond to Figure 1 and Figure 2 in the paper. The two tasks are structurally identical but with a different pixel permutation — requiring the network to relearn the pixel mapping while retaining the abstract representations.
 
-> **Connection between figures:** Fig2 demonstrates that under Dropout, the Winning Models have significantly larger parameter capacity — particularly Maxout and LWTA. This is consistent with the paper's hypothesis that Dropout enables training of wider networks with spare capacity to retain Task A representations while learning Task B.
+> **Connection between figures:** The paper's Fig2 shows Dropout winning models consistently larger than SGD — particularly for ReLU and LWTA. Our reproduced Fig2 shows a different pattern: LWTA_SGD is the largest model (~13.6M parameters), while Dropout models are smaller across most conditions. This divergence is expected with only 8 trials — the winning model is sensitive to which HP configuration was sampled, and with fewer trials the largest-capacity configurations are less likely to be selected. The paper's trend (Dropout → larger capacity) is therefore not reliably reproducible at 8 trials per condition.
 
 ---
 
@@ -153,6 +163,8 @@ Both figures correspond to Figure 3 and Figure 4 in the paper. Both tasks are se
 
 In Scenario 2, all methods show relatively high errors (best_joint range: 0.309–0.869), reflecting the high-dimensional sparse nature of Amazon Reviews. ReLU_Dropout leads (best_joint=0.309) rather than Maxout_Dropout (0.316) — unlike Scenario 1, reinforcing the claim that there is no universal activation function.
 
+> **Model sizes note:** The paper's Fig4 shows Dropout winning models substantially larger than SGD (LWTA_Dropout ~40M vs ~3M). Our reproduced Fig4 shows LWTA and Maxout roughly equal between SGD and Dropout (~20M and ~15M respectively), and Sigmoid_SGD actually larger than Sigmoid_Dropout. This discrepancy again reflects the high sensitivity of winning model size to HP sampling at 8 trials.
+
 ---
 
 ### Scenario 3 — Dissimilar Tasks (MNIST -> Amazon DVD)
@@ -162,7 +174,7 @@ In Scenario 2, all methods show relatively high errors (best_joint range: 0.309�
 
 Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most challenging pair — computer vision (MNIST) versus natural language processing (Amazon), with no semantic overlap.
 
-> **Scenario 3 anomaly:** Fig6 shows LWTA allocated the highest parameter capacity, yet Fig5 shows it retaining Task A performance poorly — best_old of LWTA_SGD (0.0078) is higher than ReLU_Dropout (0.0054). Larger capacity alone does not protect against catastrophic forgetting when tasks are semantically dissimilar.
+> **Model sizes note:** The paper's Fig6 shows LWTA_SGD allocated the highest capacity (~21M), with LWTA_Dropout very small (~1M) — a dramatic SGD-vs-Dropout gap. Our reproduced Fig6 shows a different pattern: LWTA_SGD and LWTA_Dropout are roughly equal (~9M each), while Maxout_Dropout is surprisingly large (~6M) versus a very small Maxout_SGD (~0.5M). The qualitative conclusion still holds — larger model capacity does not guarantee better forgetting resistance in the dissimilar tasks scenario — but the specific activation/algorithm that exhibits this is different in our reproduction.
 
 ---
 
