@@ -183,24 +183,27 @@ with open(file_path, encoding="utf-8", errors="ignore") as f:
 This will skip any malformed characters rather than crashing.
 
 **Us:**
-ok that fixed it. but the Amazon review files have like 30,000 features per sample (one per vocabulary word). the main script crashes when trying to build the model because it says the input is too big. can you write code to reduce the dimensions?
+ok that fixed it. but the Amazon review files have thousands of features per sample (one per vocabulary word). the main script is very slow. can you write code to reduce the vocabulary to only the most important words?
 
 **Claude:**
-Yes — you can use TruncatedSVD from scikit-learn to reduce the feature space. The key constraint is that you must fit the SVD on training data only and then apply it to both train and test, to avoid leaking test information into the features:
+Yes — the cleanest approach is to fit a shared `DictVectorizer` on all categories combined, then keep only the top-k features by total corpus frequency. Fitting on all categories together ensures the feature indices are consistent across categories, which matters for Scenario 3 where you train on one category and test on another:
 
 ```python
-from sklearn.decomposition import TruncatedSVD
-from sklearn.preprocessing import normalize
+from sklearn.feature_extraction import DictVectorizer
+import numpy as np
 
-svd = TruncatedSVD(n_components=784, random_state=42)
-X_train_reduced = svd.fit_transform(X_train)   # fit on train only
-X_test_reduced  = svd.transform(X_test)         # apply same transform to test
+vectorizer = DictVectorizer(sparse=True)
+X_all = vectorizer.fit_transform(all_rows)          # fit on union of all categories
 
-X_train_reduced = normalize(X_train_reduced)
-X_test_reduced  = normalize(X_test_reduced)
+# Keep top-5000 features by corpus frequency
+freqs    = np.asarray(X_all.sum(axis=0)).ravel()
+keep_idx = np.argsort(freqs)[::-1][:5000]
+
+# For each category:
+X = vectorizer.transform(category_rows)[:, keep_idx].toarray().astype(np.float32)
 ```
 
-We chose 784 components to match the MNIST input size, making Scenario 3 architecturally comparable to Scenario 1. Note that this is a deviation from the paper — the paper feeds the full vocabulary. Scenario 3 results should therefore be treated as approximate.
+This gives you a consistent 5000-dimensional input across all Amazon categories. Note that the paper uses the full vocabulary — restricting to 5000 features is a deviation, but it makes the experiments tractable and the qualitative results are preserved.
 
 **Us:**
 ok that fixed it. but now prepare_amazon_npz.py ran and created .npz files but when we run the main experiment it crashes on scenario 3 with "AssertionError: assert amazon_cls == 2"

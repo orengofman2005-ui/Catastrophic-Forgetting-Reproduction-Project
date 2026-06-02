@@ -121,16 +121,18 @@ A convex hull can include dominated points when the point cloud has concave regi
 
 ---
 
-### Improvement 5 — SVD Feature Reduction for Amazon Reviews (Scenario 3)
+### Improvement 5 — Shared Vocabulary Feature Selection for Amazon Reviews (Scenario 3)
 
-**Code:** `prepare_amazon_npz.py` — `TruncatedSVD` block
+**Code:** `prepare_amazon_npz.py` — `build_shared_vectorizer()` and `vectorize_category()`
 **Note:** This is an algorithmic deviation — see caveat below.
 
-The original paper feeds Amazon review bag-of-words vectors at full vocabulary size (~5000+ features) directly into the MLP. We applied `TruncatedSVD` to reduce dimensionality to 784 (matching MNIST), fitting the SVD **on training data only** to prevent data leakage.
+The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We fit a shared `DictVectorizer` on the union of all four Amazon categories, then keep only the top-5000 features by corpus frequency.
 
-Benefits: faster HP search, noise reduction from rare vocabulary terms, and a fair architectural comparison with Scenario 1 (identical input dimensions).
+Two key design decisions:
+1. **Shared vocabulary across categories** — the feature indices are identical for books, dvd, electronics, and kitchen. This is required for Scenario 3, where the model is trained on one category and evaluated on another. Without a shared vocabulary, input dimensions would be incompatible.
+2. **Top-5000 by frequency** — rare vocabulary terms add noise without useful signal. Restricting to the 5000 most common features reduces input dimensionality and speeds up HP search significantly.
 
-> **Caveat:** Because this changes the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
+> **Caveat:** Because this restricts the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
 
 ---
 
