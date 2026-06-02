@@ -70,18 +70,27 @@ The original paper does not publish exact numbers. The table below reports our m
 
 #### Why Scenario 3 Required a Deviation — The Input Dimension Problem
 
-Scenario 3 pairs two completely different tasks: MNIST digit classification (images, 784 pixels) and Amazon DVD sentiment analysis (text, 5000 bag-of-words features). These have fundamentally different input sizes.
+Scenario 3 pairs two completely different tasks: MNIST digit classification (images, 784 pixels) and Amazon DVD sentiment analysis (text, 5000 bag-of-words features). A neural network has a fixed input layer — it cannot simultaneously accept 784 inputs for one task and 5000 inputs for another. Both tasks must share the same input dimension.
 
-**The problem:** A neural network has a fixed input layer — it cannot simultaneously accept 784 inputs for one task and 5000 inputs for another. The paper does not address this directly, presumably because their original Theano implementation handled it differently or used a larger shared architecture.
+**How the original paper solved it:** The paper (Theano/Pylearn2) almost certainly used **zero-padding** — keeping Amazon at its full 5000+ vocabulary dimensions and padding MNIST images with zeros up to the same size. This way:
+- Amazon uses all 5000 features normally
+- MNIST uses the first 784 positions (pixel values) and positions 784–4999 are always zero
+- Both tasks share a 5000-dim input layer
 
-**Our solution:** We applied TruncatedSVD to the Amazon feature vectors, reducing them from 5000 to 784 dimensions — matching MNIST exactly. The SVD is fit only on the Amazon training data (no leakage to test), and captures the dominant directions of variance in the review text. Both tasks then share the same 784-dimensional input layer.
+Our code even contains the function `get_padded_binary_mnist_loaders(target_dim)` built exactly for this purpose — it pads MNIST with zeros to reach `target_dim`.
 
-**Why this is a legitimate choice:**
-- It is the standard approach for cross-modal continual learning experiments
-- The qualitative structure of the task is preserved — the SVD components still encode semantic differences between positive and negative reviews
-- It is the only practical option without changing the network architecture between tasks
+**Why we chose differently:** Padding MNIST to 5000 means the network has 5000 input weights, of which ~84% are always zero for MNIST. With only 8 trials and patience=15, we were concerned this would hurt HP search efficiency significantly. Instead we applied **TruncatedSVD** to compress Amazon from 5000 to 784 dimensions (fit on training data only), matching MNIST's natural size. Both approaches are valid solutions to the same problem.
 
-**What this means for the results:** The absolute error values in Scenario 3 are not directly comparable to the paper's numbers, because the input representation is different. However, the **ranking of methods** (which activation function and algorithm performs best) is robust to this transformation, since all 8 conditions use the same transformed input. Rankings are therefore still valid for comparison.
+**Trade-off:**
+| | Paper approach | Our approach |
+|---|---|---|
+| MNIST | padded to 5000 (zeros added) | kept at 784 (no change) |
+| Amazon | full 5000 features | compressed to 784 via SVD |
+| Input layer | 5000 neurons | 784 neurons |
+| Amazon information loss | none | small (top-784 SVD components) |
+| MNIST information loss | none | none |
+
+**What this means for the results:** The absolute error values in Scenario 3 are not directly comparable to the paper because the input representation differs. However, the **ranking of methods** is robust — all 8 conditions use the same transformed input, so relative comparisons are valid.
 
 > **Summary:** Scenario 3 is an **approximate reproduction** — rankings match, absolute values do not. This is explicitly flagged in all tables and figures.
 
