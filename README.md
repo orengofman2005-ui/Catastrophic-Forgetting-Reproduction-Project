@@ -197,14 +197,41 @@ After a complete run, `results_repro/` should contain:
 
 ## Reproduced Figures
 
-| | Paper (Original) | Ours (Reproduced) |
-|---|---|---|
-| **Figure 1** — Frontier, Input Reformatting | ![](paper_figures/Fig1_original.png) | ![](paper_figures/Fig1_frontier_input_reformatting.png) |
-| **Figure 2** — Model Sizes, Input Reformatting | ![](paper_figures/Fig2_original.png) | ![](paper_figures/Fig2_model_sizes_input_reformatting.png) |
-| **Figure 3** — Frontier, Similar Tasks | ![](paper_figures/Fig3_original.png) | ![](paper_figures/Fig3_frontier_similar_tasks.png) |
-| **Figure 4** — Model Sizes, Similar Tasks | ![](paper_figures/Fig4_original.png) | ![](paper_figures/Fig4_model_sizes_similar_tasks.png) |
-| **Figure 5** — Frontier, Dissimilar Tasks | ![](paper_figures/Fig5_original.png) | ![](paper_figures/Fig5_frontier_dissimilar_tasks.png) |
-| **Figure 6** — Model Sizes, Dissimilar Tasks | ![](paper_figures/Fig6_original.png) | ![](paper_figures/Fig6_model_sizes_dissimilar_tasks.png) |
+### Figure 1 — Frontier, Input Reformatting (Permuted MNIST)
+
+| Paper (Original) | Ours (Reproduced) |
+|---|---|
+| <img src="paper_figures/Fig1_original.png" width="450"/> | <img src="paper_figures/Fig1_frontier_input_reformatting.png" width="450"/> |
+
+### Figure 2 — Model Sizes, Input Reformatting
+
+| Paper (Original) | Ours (Reproduced) |
+|---|---|
+| <img src="paper_figures/Fig2_original.png" width="450"/> | <img src="paper_figures/Fig2_model_sizes_input_reformatting.png" width="450"/> |
+
+### Figure 3 — Frontier, Similar Tasks (Amazon)
+
+| Paper (Original) | Ours (Reproduced) |
+|---|---|
+| <img src="paper_figures/Fig3_original.png" width="450"/> | <img src="paper_figures/Fig3_frontier_similar_tasks.png" width="450"/> |
+
+### Figure 4 — Model Sizes, Similar Tasks
+
+| Paper (Original) | Ours (Reproduced) |
+|---|---|
+| <img src="paper_figures/Fig4_original.png" width="450"/> | <img src="paper_figures/Fig4_model_sizes_similar_tasks.png" width="450"/> |
+
+### Figure 5 — Frontier, Dissimilar Tasks (MNIST + Amazon)
+
+| Paper (Original) | Ours (Reproduced) |
+|---|---|
+| <img src="paper_figures/Fig5_original.png" width="450"/> | <img src="paper_figures/Fig5_frontier_dissimilar_tasks.png" width="450"/> |
+
+### Figure 6 — Model Sizes, Dissimilar Tasks
+
+| Paper (Original) | Ours (Reproduced) |
+|---|---|
+| <img src="paper_figures/Fig6_original.png" width="450"/> | <img src="paper_figures/Fig6_model_sizes_dissimilar_tasks.png" width="450"/> |
 
 ---
 
