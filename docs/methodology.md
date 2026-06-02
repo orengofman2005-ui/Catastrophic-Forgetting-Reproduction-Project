@@ -70,41 +70,72 @@ The script saves a checkpoint after each condition. If the run is interrupted �
 
 ---
 
-## Bonus: Attempted Improvements
+## Bonus Improvements
 
-Beyond the core reproduction (which is approximate — see Deviations table above), we attempted several improvements over the original paper's setup. These are documented here as the bonus component of the project.
-
-### 1. Expanded Hyperparameter Search Range
-
-Since the original paper does not publish its HP search ranges, our choices (`10^U[-2.5, -1.0]` for LR, `U[250, 1000]` post-activation units for Maxout/LWTA) were determined empirically. An earlier version of this code used narrower ranges; widening the lower LR bound produced slightly more stable Frontier curves in Scenario 1, particularly for Maxout_Dropout.
-
-### 2. Monotonic Frontier Instead of Raw Lower Convex Hull
-
-The original paper appears to use a lower convex hull on a log scale, but the exact method is not specified. We implemented a strict lower-left Pareto frontier in log space (`pareto_lower_left` in `final_experiment_repro.py`), which more cleanly separates dominant solutions from dominated ones. This produces cleaner curves than a naive convex hull, especially when point density is low (8 trials vs. 25).
-
-### 3. Baseline Reference Line
-
-We added a vertical dashed baseline to each Frontier plot marking the median old-task error at the start of new-task training. This is not present in the original paper's figures but makes it immediately visible how much each method degrades relative to the pre-forgetting reference — improving interpretability.
-
-### 4. SVD-Based Feature Reduction for Amazon (Scenario 3) — Approximate Reproduction
-
-In Scenario 3, the original paper feeds Amazon reviews directly into an MLP at full vocabulary dimensionality (~5000+ features). We applied TruncatedSVD to reduce the feature space to 784 dimensions (matching MNIST input size), fitting the SVD on the training set only to avoid data leakage.
-
-> **This is an algorithmic deviation, not merely a technical improvement.** Scenario 3 should therefore be treated as an **approximate reproduction**: the qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. All Scenario 3 findings are reported as qualitative agreement only.
-
-### 5. Per-Condition Checkpointing
-
-The original paper gives no indication of how runs were managed. We added automatic per-condition checkpointing so that if training is interrupted (e.g., power loss, kernel crash), it resumes from the last completed condition rather than from scratch. This is particularly valuable given the 6–12 hour runtime.
-
-**Note on bonus outcomes:** Improvements 3–5 are clearly beneficial (cleaner visualization, no leakage, robustness). Improvements 1–2 produced modest qualitative gains consistent with the paper's conclusions. No improvement reversed or contradicted any finding from the original paper.
+Beyond the core reproduction, we introduced five improvements over the original paper's setup. All are documented below with the exact code location and motivation.
 
 ---
 
-## Ablation Study
+### Improvement 1 — Ablation Study
 
-Beyond reproduction, we ran controlled ablation experiments to isolate the mechanisms behind Dropout's forgetting resistance. Two ablations were performed on Scenario 1 (Permuted MNIST):
+**Code:** `ablation_study.py` — functions `ablation_dropout()` and `ablation_weight_decay()`
+**Docs:** `docs/ablation.md`
 
-1. **Dropout Rate** — comparing p=0.0, 0.2, and 0.5 (paper value)
-2. **Weight Decay** — comparing none, 1e-4, and 1e-3
+The original paper establishes that Dropout reduces catastrophic forgetting, but does not quantify how much of the effect comes from the dropout rate itself versus weight regularization. We ran a controlled ablation study on Scenario 1 (Permuted MNIST), varying one component at a time:
 
-See [ablation.md](ablation.md) for full results and interpretation.
+- **Dropout Rate:** p ∈ {0.0, 0.2, 0.5} — result: -58% forgetting at p=0.5 vs. no dropout
+- **Weight Decay:** λ ∈ {0, 1e-4, 1e-3} — result: marginal gain at 1e-4, slightly worse at 1e-3
+
+This extends the paper's qualitative claim with quantitative evidence for the mechanism.
+
+---
+
+### Improvement 2 — Statistical Error Bars
+
+**Code:** `plot_results.py` — function `plot_errorbars()`
+**Output:** `results_repro/fig_s*_errorbars.png`
+
+The original paper reports a single best_joint score per condition, with no variance measure. We compute mean ± std across all 8 trials and plot error bar figures for all 3 scenarios.
+
+This is especially important given our reduced trial count (8 vs. paper's 25): the error bars make the statistical uncertainty explicit rather than hiding it.
+
+---
+
+### Improvement 3 — Baseline Reference Line on Frontier Plots
+
+**Code:** `plot_results.py` — `baseline_x` parameter in `plot_frontier()`
+
+Each Frontier plot includes a vertical dashed line marking the median old-task error at the start of new-task training (before any forgetting occurs). The original paper's figures do not include this reference.
+
+Without it, the Frontier only shows relative differences between methods. With it, a reader can immediately quantify absolute degradation: "Maxout+Dropout degrades by X% from the pre-forgetting baseline."
+
+---
+
+### Improvement 4 — Monotonic Pareto Frontier
+
+**Code:** `final_experiment_repro.py` — function `pareto_lower_left()`
+
+The original paper uses a lower convex hull on a log scale, but the exact algorithm is not specified. We implemented a strict lower-left Pareto frontier: a point is included only if no other observed point is simultaneously better on both axes.
+
+A convex hull can include dominated points when the point cloud has concave regions. The Pareto frontier never includes dominated points by definition — this is strictly cleaner, and particularly important at low trial counts (8 vs. 25) where the point cloud is sparse.
+
+---
+
+### Improvement 5 — SVD Feature Reduction for Amazon Reviews (Scenario 3)
+
+**Code:** `prepare_amazon_npz.py` — `TruncatedSVD` block
+**Note:** This is an algorithmic deviation — see caveat below.
+
+The original paper feeds Amazon review bag-of-words vectors at full vocabulary size (~5000+ features) directly into the MLP. We applied `TruncatedSVD` to reduce dimensionality to 784 (matching MNIST), fitting the SVD **on training data only** to prevent data leakage.
+
+Benefits: faster HP search, noise reduction from rare vocabulary terms, and a fair architectural comparison with Scenario 1 (identical input dimensions).
+
+> **Caveat:** Because this changes the input representation, Scenario 3 is an **approximate reproduction** — qualitative rankings are preserved, but absolute error values are not directly comparable to the paper. This is flagged in all Scenario 3 result tables.
+
+---
+
+### Improvement 6 — Per-Condition Checkpointing
+
+**Code:** `final_experiment_repro.py` — `save_checkpoint()` / `load_checkpoint()` calls after each condition
+
+The original paper gives no indication of run management. We added automatic per-condition checkpointing: if training is interrupted (power loss, crash), it resumes from the last completed condition rather than from scratch. Given the 6–12 hour runtime, this is critical for practical reproducibility.

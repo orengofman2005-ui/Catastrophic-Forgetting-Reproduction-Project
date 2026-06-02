@@ -208,18 +208,86 @@ After a complete run, `results_repro/` should contain:
 
 ---
 
-## Ablation Study
+## Bonus Improvements
 
-Beyond reproduction, we ran controlled ablation experiments to isolate the mechanisms behind Dropout's forgetting resistance. Key results:
+This project goes beyond reproduction by introducing five concrete improvements over the original paper's methodology and presentation. Each improvement is documented, reasoned, and traceable to specific code.
 
-| Component | Forgetting Rate | Reduction vs Baseline |
+---
+
+### Improvement 1 — Ablation Study (New Analysis)
+
+> **Category:** Alternative analysis approach
+> **File:** [`ablation_study.py`](ablation_study.py) · **Docs:** [`docs/ablation.md`](docs/ablation.md)
+
+The original paper establishes *that* Dropout reduces forgetting, but does not analyze *why* or *how much* each component contributes. We added a controlled ablation study on Scenario 1 (Permuted MNIST) to answer these questions.
+
+**Two ablations were run:**
+
+**Ablation 1 — Dropout Rate** (`ablation_dropout()` in `ablation_study.py`):
+
+| Dropout Rate | Forgetting Rate (mean ± std) | Reduction |
 |---|---|---|
-| No Dropout | 0.213 ± 0.044 | — |
-| Dropout p=0.2 | 0.142 ± 0.031 | -33% |
-| Dropout p=0.5 | **0.089 ± 0.021** | **-58%** |
-| + Weight Decay 1e-4 | 0.083 ± 0.019 | -7% additional |
+| 0.0 (no dropout) | 0.213 ± 0.044 | — |
+| 0.2 | 0.142 ± 0.031 | -33% |
+| 0.5 (paper value) | **0.089 ± 0.021** | **-58%** |
 
-See [docs/ablation.md](docs/ablation.md) for full analysis.
+**Ablation 2 — Weight Decay** (`ablation_weight_decay()` in `ablation_study.py`):
+
+| Weight Decay | Forgetting Rate (mean ± std) | Reduction |
+|---|---|---|
+| 0 (none) | 0.089 ± 0.021 | — |
+| 1e-4 | 0.083 ± 0.019 | -7% |
+| 1e-3 | 0.091 ± 0.026 | +2% (hurts) |
+
+**Key finding:** Dropout is the dominant mechanism. Weight decay provides a marginal benefit at 1e-4, but too much (1e-3) slightly worsens forgetting. This extends the paper's conclusion with quantitative support.
+
+See [`docs/ablation.md`](docs/ablation.md) for full analysis and interpretation.
+
+---
+
+### Improvement 2 — Statistical Error Bars (New Visualization)
+
+> **Category:** Improved data presentation
+> **File:** [`plot_results.py`](plot_results.py) — function `plot_errorbars()` · **Output:** `results_repro/fig_s*_errorbars.png`
+
+The original paper reports only the best_joint score per condition, with no measure of variance across trials. We added mean ± std error bar figures for all 3 scenarios, making it possible to see whether differences between conditions are within or outside sampling noise.
+
+This is especially relevant given that we used 8 trials instead of the paper's 25 — error bars make the reduced statistical power explicit and honest.
+
+---
+
+### Improvement 3 — Baseline Reference Line on Frontier Plots
+
+> **Category:** Improved data presentation
+> **File:** [`plot_results.py`](plot_results.py) — `baseline_x` parameter in `plot_frontier()`
+
+Each Frontier plot now includes a vertical dashed line marking the median old-task error at the start of new-task training (before any forgetting occurs). This reference is absent from the original paper's figures.
+
+**Why it helps:** Without the baseline, the Frontier curves show only relative differences between methods. The baseline makes visible how much each method degrades in absolute terms — a reader can immediately see "by how much did this method forget?" rather than only "which method forgot less?".
+
+---
+
+### Improvement 4 — Monotonic Pareto Frontier (Methodological Refinement)
+
+> **Category:** Alternative analysis approach
+> **File:** [`final_experiment_repro.py`](final_experiment_repro.py) — function `pareto_lower_left()`
+
+The original paper uses a lower convex hull on log scale to draw the Frontier curves, but the exact algorithm is not specified. We implemented a strict lower-left Pareto frontier in log space: a point is on the Frontier only if no other point is simultaneously better on both axes (lower old-task error *and* lower new-task error).
+
+**Why it's better:** A convex hull can include dominated points if the point cloud has a concave region. The Pareto frontier never includes dominated points by definition, producing cleaner curves. This is especially important at low trial counts (8 vs. 25) where the point cloud is sparse.
+
+---
+
+### Improvement 5 — SVD Feature Reduction for Amazon Reviews (Scenario 3)
+
+> **Category:** Data processing optimization
+> **File:** [`prepare_amazon_npz.py`](prepare_amazon_npz.py) — `TruncatedSVD` block · **Docs:** [`docs/methodology.md`](docs/methodology.md)
+
+In Scenario 3, the original paper feeds Amazon review bag-of-words vectors directly into an MLP at full vocabulary size (~5000+ features). We applied TruncatedSVD to reduce the feature space to 784 dimensions (matching MNIST), fitting the SVD **on the training set only** to prevent data leakage.
+
+**Why it's an improvement:** Reducing dimensionality before training (i) speeds up the search significantly, (ii) removes noise from low-frequency vocabulary terms, and (iii) enables a fair architectural comparison with Scenario 1 (same input size). The SVD fit is strictly on training data, so no test information contaminates the features.
+
+> **Important caveat:** This is an algorithmic deviation from the paper, not just a technical improvement. Scenario 3 results should be treated as a **qualitative reproduction only** — absolute error values are not directly comparable to the paper. This is documented explicitly in [`docs/methodology.md`](docs/methodology.md).
 
 ---
 
