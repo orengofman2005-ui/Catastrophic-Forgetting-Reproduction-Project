@@ -85,7 +85,6 @@ All major rankings are preserved; one minor reversal (Maxout SGD vs Maxout Dropo
 │   ├── scenario_5_repro.pt     # Checkpoint: Scenario 3 results
 │   ├── fig_s*_frontier.png     # Frontier figures
 │   ├── fig_s*_params.png       # Model size figures
-│   ├── fig_s*_errorbars.png    # Error bar figures (mean ± std)
 │   └── ablation_*.png          # Ablation figures
 │
 ├── data/
@@ -159,7 +158,6 @@ python plot_results.py
 Produces in `results_repro/`:
 - `fig_s*_frontier.png` — Possibilities Frontier curves
 - `fig_s*_params.png` — Winning model parameter counts
-- `fig_s*_errorbars.png` — Mean ± Std best_joint per condition **(new)**
 
 ### 5. Run Ablation Study (Optional)
 
@@ -188,7 +186,6 @@ After a complete run, `results_repro/` should contain:
 | `fig_s3_params.png` | Reproduces paper Figure 4 |
 | `fig_s5_frontier.png` | Reproduces paper Figure 5 |
 | `fig_s5_params.png` | Reproduces paper Figure 6 |
-| `fig_s*_errorbars.png` | Error bar figures (not in original paper) |
 | `ablation_dropout.png` | Dropout rate ablation figure |
 | `ablation_wd.png` | Weight decay ablation figure |
 | `ablation_results.pt` | Raw ablation data |
