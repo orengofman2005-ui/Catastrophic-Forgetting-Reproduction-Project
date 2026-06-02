@@ -59,6 +59,9 @@ Random search — 8 trials per condition (paper: 25):
 | Framework | Theano / Pylearn2 | PyTorch | Medium — numerical precision differences |
 | Batch size | 128 | 256 | Medium — different gradient noise |
 | Seed | not specified | 42 only | High — no variance estimation |
+| Scenario 3 input (Amazon) | Full vocabulary | TruncatedSVD → 784 dims | Medium — see note below |
+
+> **Scenario 3 implementation note:** MNIST and Amazon Reviews have incompatible input sizes (784 vs. 5000+). To share a single input layer across both tasks, we apply `TruncatedSVD` to the Amazon feature vectors, reducing them from 5000 to 784 dimensions — matching MNIST exactly. The SVD is fit on the Amazon **training set only** to prevent data leakage. This means Scenario 3 absolute error values are not directly comparable to the paper, but the ranking of methods across all 8 conditions remains valid.
 
 ## Note on Patience Bias
 
