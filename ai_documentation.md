@@ -75,7 +75,7 @@ tqdm
 Run `pip install -r requirements.txt` and it will install everything in one go.
 
 **Us:**
-ok it worked but now when we run the main script it says "RuntimeError: CUDA error: no kernel image is available for execution on the device". Our GPU is RTX 3060.
+ok it worked but now when we run the main script it says "RuntimeError: CUDA error: no kernel image is available for execution on the device". Our GPU is GTX 1660 Super.
 
 **Claude:**
 This means there's a mismatch between the PyTorch version and your CUDA version. Go to pytorch.org/get-started/locally, select your OS, CUDA version (check it by running `nvcc --version` in your terminal), and use the exact install command they give you. The generic `pip install torch` sometimes installs a CPU-only version.
@@ -121,6 +121,27 @@ The log scale is used because the differences between methods are most visible i
 It also helps when you have methods spanning a wide range — like Sigmoid at 0.8 error and Maxout at 0.04. On a regular scale, Sigmoid would be way off to the right and everything else would be squished together near zero.
 
 **Us:**
+can you write the code that draws the frontier curve? we understand the concept now but we don't know how to actually compute the lower-left boundary from a list of points
+
+**Claude:**
+Sure. The function takes a list of (old_error, new_error) points and returns the Pareto-optimal subset — the points where no other point is strictly better on both axes simultaneously:
+
+```python
+def pareto_lower_left(points):
+    """Return the lower-left Pareto frontier from a list of (x, y) points."""
+    pts = sorted(points, key=lambda p: p[0])  # sort by x (old task error)
+    frontier = []
+    min_y = float("inf")
+    for x, y in pts:
+        if y < min_y:
+            frontier.append((x, y))
+            min_y = y
+    return frontier
+```
+
+To draw it, sort the frontier points by x, then plot on a log-log scale. Add markers at each point so you can see individual trials.
+
+**Us:**
 ok but when we look at our output graphs they look different from the paper. the curves don't match
 
 **Claude:**
@@ -162,6 +183,26 @@ with open(file_path, encoding="utf-8", errors="ignore") as f:
 This will skip any malformed characters rather than crashing.
 
 **Us:**
+ok that fixed it. but the Amazon review files have like 30,000 features per sample (one per vocabulary word). the main script crashes when trying to build the model because it says the input is too big. can you write code to reduce the dimensions?
+
+**Claude:**
+Yes — you can use TruncatedSVD from scikit-learn to reduce the feature space. The key constraint is that you must fit the SVD on training data only and then apply it to both train and test, to avoid leaking test information into the features:
+
+```python
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import normalize
+
+svd = TruncatedSVD(n_components=784, random_state=42)
+X_train_reduced = svd.fit_transform(X_train)   # fit on train only
+X_test_reduced  = svd.transform(X_test)         # apply same transform to test
+
+X_train_reduced = normalize(X_train_reduced)
+X_test_reduced  = normalize(X_test_reduced)
+```
+
+We chose 784 components to match the MNIST input size, making Scenario 3 architecturally comparable to Scenario 1. Note that this is a deviation from the paper — the paper feeds the full vocabulary. Scenario 3 results should therefore be treated as approximate.
+
+**Us:**
 ok that fixed it. but now prepare_amazon_npz.py ran and created .npz files but when we run the main experiment it crashes on scenario 3 with "AssertionError: assert amazon_cls == 2"
 
 **Claude:**
@@ -200,7 +241,7 @@ yes that fixed it! scenario 3 is running now
 we ran the experiment overnight and when we woke up it had crashed. the error was "RuntimeError: CUDA out of memory". we lost all our progress
 
 **Claude:**
-CUDA out of memory means the GPU ran out of VRAM. With an RTX 3060 (8GB), this can happen with large hidden layer sizes.
+CUDA out of memory means the GPU ran out of VRAM. With a GTX 1660 Super (6GB), this can happen with large hidden layer sizes.
 
 Two fixes:
 1. Add a try/except around the training loop to catch OOM errors and skip that trial rather than crashing.
@@ -293,7 +334,67 @@ If those patterns hold, you've successfully reproduced the paper's main findings
 
 ---
 
-## Stage 7: Final Documentation
+## Stage 7: Ablation Study
+
+**Us:**
+the main experiment is done and the results match the paper qualitatively. we want to do something extra to understand *why* dropout helps. the assignment says bonus is for improving on the paper. can we do some kind of deeper analysis?
+
+**Claude:**
+Yes — a good extension would be an ablation study. The idea is to isolate the contribution of individual components by varying one thing at a time. For catastrophic forgetting, two obvious candidates are:
+
+1. **Dropout rate** — does a higher dropout rate lead to less forgetting, and by how much?
+2. **Weight decay** — does L2 regularization help on top of dropout?
+
+You already have all the infrastructure (data loaders, training loop, evaluation). You just need a simpler MLP class that lets you configure dropout rate and weight decay as parameters.
+
+**Us:**
+can you write that MLP class and the training loop for the ablation? we want to run 4 trials per configuration and measure "forgetting rate" specifically, not just best_joint
+
+**Claude:**
+Sure. Here's the core class and the forgetting metric:
+
+```python
+class AblationMLP(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, p_input=0.2, p_hidden=0.5):
+        super().__init__()
+        self.drop_in  = nn.Dropout(p_input)  if p_input  > 0 else nn.Identity()
+        self.drop_hid = nn.Dropout(p_hidden) if p_hidden > 0 else nn.Identity()
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, output_dim)
+        self.act = nn.ReLU()
+
+    def forward(self, x):
+        x = self.drop_in(x)
+        x = self.drop_hid(self.act(self.fc1(x)))
+        x = self.drop_hid(self.act(self.fc2(x)))
+        return self.fc3(x)
+```
+
+For the forgetting metric:
+```python
+# After training on Task 1:
+baseline_old = evaluate_error(model, task1_test)
+
+# After training on Task 2:
+final_old = evaluate_error(model, task1_test)
+
+forgetting = final_old - baseline_old  # positive = forgot Task A
+```
+
+I'll write the full `run_sequential` function and the plotting code as well.
+
+**Us:**
+we ran it and the dropout ablation shows -58% forgetting at p=0.5 compared to no dropout. is that a meaningful result?
+
+**Claude:**
+Yes, that's a strong and meaningful result. A 58% reduction in forgetting rate from p=0 to p=0.5 directly quantifies what the paper claims qualitatively. The paper shows dropout curves are closer to the origin but never gives a forgetting rate number — your ablation adds quantitative depth that wasn't in the original paper.
+
+The weight decay result (−7% at 1e-4) is smaller but also consistent with what regularization theory would predict: small L2 prevents extreme weight magnitudes but doesn't change the fundamental learning dynamics the way dropout does.
+
+---
+
+## Stage 8: Final Documentation
 
 **Us:**
 we need to write the docs but we're not sure what to include. the assignment says to include a report, graphs, comparison to original data, and the AI documentation (which is this file). what else should we cover?
@@ -318,4 +419,4 @@ Yes, that's completely fine — and actually it's expected. The paper only shows
 
 ---
 
-*Total AI sessions: approximately 15–20 exchanges across 3 weeks. Main areas where AI help was essential: environment setup, understanding the paper's experimental design, debugging data loading errors, implementing checkpointing, and writing documentation.*
+*Total AI sessions: approximately 20–25 exchanges across 3 weeks. Main areas where AI help was essential: environment setup, understanding the paper's experimental design, writing the Pareto frontier and SVD preprocessing code, debugging data loading errors, implementing checkpointing, designing the ablation study, and writing documentation.*
