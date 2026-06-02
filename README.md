@@ -281,6 +281,10 @@ The original paper reports only the best_joint score per condition, with no meas
 
 This is especially relevant given that we used 8 trials instead of the paper's 25 — error bars make the reduced statistical power explicit and honest.
 
+| Scenario 1 | Scenario 2 | Scenario 3 |
+|---|---|---|
+| <img src="results_repro/fig_s1_errorbars.png" width="300"/> | <img src="results_repro/fig_s3_errorbars.png" width="300"/> | <img src="results_repro/fig_s5_errorbars.png" width="300"/> |
+
 ---
 
 ### Improvement 3 — Baseline Reference Line on Frontier Plots
@@ -305,16 +309,14 @@ The original paper uses a lower convex hull on log scale to draw the Frontier cu
 
 ---
 
-### Improvement 5 — SVD Feature Reduction for Amazon Reviews (Scenario 3)
+### Improvement 5 — Shared Vocabulary Feature Selection for Amazon Reviews
 
 > **Category:** Data processing optimization
-> **File:** [`prepare_amazon_npz.py`](prepare_amazon_npz.py) — `TruncatedSVD` block · **Docs:** [`docs/methodology.md`](docs/methodology.md)
+> **File:** [`prepare_amazon_npz.py`](prepare_amazon_npz.py) — `build_shared_vectorizer()` · **Docs:** [`docs/methodology.md`](docs/methodology.md)
 
-In Scenario 3, the original paper feeds Amazon review bag-of-words vectors directly into an MLP at full vocabulary size (~5000+ features). We applied TruncatedSVD to reduce the feature space to 784 dimensions (matching MNIST), fitting the SVD **on the training set only** to prevent data leakage.
+The original paper feeds Amazon review bag-of-words vectors at full vocabulary size directly into the MLP. We fit a shared `DictVectorizer` on the union of all four Amazon categories and keep only the top-5000 features by corpus frequency. For Scenario 3, MNIST images are zero-padded from 784 to 5000 dimensions to match — the same approach used in the original paper.
 
-**Why it's an improvement:** Reducing dimensionality before training (i) speeds up the search significantly, (ii) removes noise from low-frequency vocabulary terms, and (iii) enables a fair architectural comparison with Scenario 1 (same input size). The SVD fit is strictly on training data, so no test information contaminates the features.
-
-> **Important caveat:** This is an algorithmic deviation from the paper, not just a technical improvement. Scenario 3 results should be treated as a **qualitative reproduction only** — absolute error values are not directly comparable to the paper. This is documented explicitly in [`docs/methodology.md`](docs/methodology.md).
+**Why it's an improvement:** A shared vocabulary ensures consistent feature indices across all Amazon categories, which is required for cross-category evaluation. Restricting to the 5000 most frequent features removes rare-word noise and speeds up HP search.
 
 ---
 
