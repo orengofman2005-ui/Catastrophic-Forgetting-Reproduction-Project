@@ -670,16 +670,16 @@ def run_scenario_3():
     tqdm.write("\n" + "=" * 60)
     tqdm.write("SCENARIO 3 – Dissimilar Tasks (MNIST 2/9 → Amazon DVD)")
     tqdm.write("=" * 60)
+    target_dim = 784
     base = os.path.join("data", "amazon")
-    # Use Amazon at full feature size (5000), pad MNIST to match — same as original paper
-    a_tr, a_va, a_te, amazon_dim, amazon_cls = get_amazon_from_npz(
-        os.path.join(base, "dvd.npz"))
+    a_tr, a_va, a_te, _, amazon_cls = get_amazon_reduced(
+        os.path.join(base, "dvd.npz"), target_dim=target_dim)
     assert amazon_cls == 2
-    m_tr, m_va, m_te = get_padded_binary_mnist_loaders(target_dim=amazon_dim, classes=(2, 9))
+    m_tr, m_va, m_te = get_padded_binary_mnist_loaders(target_dim=target_dim, classes=(2, 9))
     ckpt = run_hyperparameter_search(
         "s3_dissimilar_mnist29_amazon_dvd",
         m_tr, m_va, m_te, a_tr, a_va, a_te,
-        input_dim=amazon_dim, output_dim=2)
+        input_dim=target_dim, output_dim=2)
     save_and_plot(ckpt, 5,
                   "Figure 5 – Dissimilar Tasks: MNIST(2,9) → Amazon DVD",
                   "Figure 6 – Optimal Model Size (Dissimilar Tasks)")
