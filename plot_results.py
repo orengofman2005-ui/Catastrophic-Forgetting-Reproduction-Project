@@ -142,22 +142,31 @@ def plot_winning_model_sizes(
     title: str,
     save_path: str,
 ):
-    """Bar chart of the winning model parameter count per condition."""
-    names  = list(winning_models.keys())
-    counts = [winning_models[k] for k in names]
+    """
+    Grouped bar chart of winning model parameter counts — SGD vs Dropout per activation.
+    Matches the style of Figures 2, 4, 6 in Goodfellow et al. (2015):
+    4 activation groups on X-axis, two bars each (blue=SGD, red=Dropout).
+    """
+    ACTIVATIONS = ["Sigmoid", "ReLU", "LWTA", "Maxout"]
+    sgd_counts     = [winning_models.get(f"{act}_SGD",     0) for act in ACTIVATIONS]
+    dropout_counts = [winning_models.get(f"{act}_Dropout", 0) for act in ACTIVATIONS]
 
-    fig, ax = plt.subplots(figsize=(12, 6.5))
-    bars = ax.bar(names, counts, color="teal", alpha=0.8)
+    x      = np.arange(len(ACTIVATIONS))
+    width  = 0.35
 
-    ax.set_ylabel("Total Parameter Count", fontsize=12)
-    ax.set_title(title, fontsize=16, pad=14)
-    ax.tick_params(axis="x", rotation=45, labelsize=10)
+    fig, ax = plt.subplots(figsize=(9, 5.5))
+    bars_sgd = ax.bar(x - width / 2, sgd_counts,     width, label="SGD",     color="#3a6dc2", alpha=0.9)
+    bars_do  = ax.bar(x + width / 2, dropout_counts, width, label="Dropout", color="#d94f3d", alpha=0.9)
+
+    ax.set_ylabel("Model size (# parameters)", fontsize=12)
+    ax.set_title(title, fontsize=14, pad=12)
+    ax.set_xticks(x)
+    ax.set_xticklabels(ACTIVATIONS, fontsize=11)
     ax.tick_params(axis="y", labelsize=10)
-
-    for bar in bars:
-        h = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width() / 2, h,
-                f"{int(h):,}", ha="center", va="bottom", fontsize=9)
+    ax.legend(fontsize=11)
+    ax.yaxis.set_major_formatter(
+        plt.FuncFormatter(lambda val, _: f"{int(val):,}")
+    )
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
