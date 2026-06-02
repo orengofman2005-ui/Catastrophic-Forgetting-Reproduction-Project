@@ -112,8 +112,3 @@ The original paper feeds Amazon review bag-of-words vectors at full vocabulary s
 
 ---
 
-### Improvement 6 — Per-Condition Checkpointing
-
-**Code:** `final_experiment_repro.py` — `save_checkpoint()` / `load_checkpoint()` calls after each condition
-
-The original paper gives no indication of run management. We added automatic per-condition checkpointing: if training is interrupted (power loss, crash), it resumes from the last completed condition rather than from scratch. Given the 6–12 hour runtime, this is critical for practical reproducibility.
