@@ -9,8 +9,8 @@ The research question posed: *Can the central conclusions of Goodfellow et al. (
 | Hypothesis | Result | Evidence |
 |---|---|---|
 | Dropout superior to SGD in all scenarios | Consistent with the paper | Dropout best_joint lower than SGD in 6 out of 8 conditions in Scenario 1 |
-| Maxout+Dropout on Frontier in every scenario | Consistent with the paper | best_joint: 0.039 / 0.316 / 0.171 in Scenarios 1/2/3 |
-| Activation function ranking is scenario-dependent | Consistent with the paper | LWTA leads on best_new in Scenario 3 but fails in Scenario 2 |
+| Maxout+Dropout on Frontier in every scenario | Consistent with the paper | best_joint: 0.039 / 0.316 / 0.161 in Scenarios 1/2/3 |
+| Activation function ranking is scenario-dependent | Consistent with the paper | ReLU leads in S2–S3, Maxout leads in S1 |
 
 ---
 
@@ -18,14 +18,14 @@ The research question posed: *Can the central conclusions of Goodfellow et al. (
 
 | Condition | Scenario 1 | Scenario 2 | Scenario 3 |
 |---|---|---|---|
-| Sigmoid + SGD | 0.173 | 0.813 | 0.201 |
-| Sigmoid + Dropout | 0.203 | 0.869 | 0.259 |
-| ReLU + SGD | 0.059 | 0.325 | 0.173 |
-| ReLU + Dropout | **0.044** | **0.309** | 0.177 |
-| Maxout + SGD | 0.042 | 0.341 | 0.170 |
-| Maxout + Dropout | **0.039** | 0.316 | **0.171** |
-| LWTA + SGD | 0.108 | 0.356 | 0.196 |
-| LWTA + Dropout | 0.045 | 0.347 | 0.176 |
+| Sigmoid + SGD | 0.173 | 0.813 | 0.205 |
+| Sigmoid + Dropout | 0.203 | 0.869 | 0.245 |
+| ReLU + SGD | 0.059 | 0.325 | 0.189 |
+| ReLU + Dropout | 0.044 | **0.309** | **0.151** |
+| Maxout + SGD | 0.042 | 0.341 | 0.189 |
+| Maxout + Dropout | **0.039** | 0.316 | 0.161 |
+| LWTA + SGD | 0.108 | 0.356 | 0.180 |
+| LWTA + Dropout | 0.045 | 0.347 | 0.190 |
 
 > These values are from this reproduction only. The original paper presented results graphically without explicit numerical values.
 
@@ -35,11 +35,27 @@ The research question posed: *Can the central conclusions of Goodfellow et al. (
 
 **1. Dropout:** Superior Frontier curves over SGD in all three scenarios. The gap is relatively small (e.g. 0.039 vs. 0.042 in Scenario 1), and it should be noted that due to Patience Bias (see Methodology), the true gap is likely larger. This finding is consistent with the original paper's claim.
 
-**2. Maxout:** The only condition appearing on the Frontier in all three scenarios — consistent with the original paper.
+**2. Maxout:** Appears on the Frontier in all three scenarios — consistent with the original paper.
 
 **3. Sigmoid:** Consistently poor performance across all scenarios (best_joint: 0.173–0.813).
 
 **4. LWTA — Scenario 3 anomaly:** Allocated high capacity (Winning Model, Fig6), yet Fig5 results are consistent with the claim that capacity alone is not a defense mechanism when tasks are semantically dissimilar.
+
+---
+
+## Per-Scenario Analysis
+
+### Scenario 1 — Input Reformatting (MNIST → Permuted MNIST)
+
+Dropout plays a dual role: both as a regularizer preventing overfitting and as a mechanism for reducing catastrophic forgetting. Maxout_Dropout (0.039) beats Maxout_SGD (0.042), and Fig2 shows that Dropout conditions select significantly larger architectures — consistent with the paper's hypothesis that Dropout enables wider networks with spare capacity to retain Task A representations while learning Task B.
+
+### Scenario 2 — Similar Tasks (Amazon Kitchen → Amazon DVD)
+
+All methods show relatively high errors (best_joint range: 0.309–0.869), reflecting the high-dimensional sparse nature of Amazon Reviews. ReLU_Dropout (0.309) leads rather than Maxout_Dropout (0.316) — unlike Scenario 1, reinforcing that there is no universal activation function. The performance gap between SGD and Dropout is smaller than in the other two scenarios, possibly because semantically similar tasks allow even plain SGD to exploit partial transfer.
+
+### Scenario 3 — Dissimilar Tasks (MNIST 2/9 → Amazon DVD)
+
+ReLU_Dropout ranks first (0.151) and Maxout_Dropout second (0.161) — Dropout methods lead as expected. The gaps between non-Sigmoid methods narrow (range 0.151–0.205), indicating broadly comparable difficulty when tasks are semantically dissimilar. LWTA was allocated the highest parameter capacity yet showed weaker Task A retention, confirming that model size alone is not sufficient protection against interference when tasks have no semantic overlap.
 
 ---
 
@@ -59,7 +75,7 @@ The research question posed: *Can the central conclusions of Goodfellow et al. (
 
 ## Recommendations for Future Work
 
-- Run the experiment with multiple seeds and report mean +/- standard deviation
+- Run the experiment with multiple seeds and report mean ± standard deviation
 - Increase the number of trials to 25 as in the original paper (on a dedicated GPU)
 - Validate Amazon preprocessing against Glorot et al. (2011b)
 - Test sensitivity to patience size (15 / 50 / 100 epochs)

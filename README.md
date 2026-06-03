@@ -92,8 +92,7 @@ Dropout methods rank 1–2 in all 3 scenarios. In Scenario 3, ReLU+Dropout (0.15
 │   └── amazon/                 # Must be downloaded manually (see below)
 │
 ├── reproducibility.md          # Full environment spec (OS, Python, CUDA, seed)
-├── ai_documentation.md         # Log of AI-assisted development process
-└── takeaways.md                # Per-scenario analysis and reflection
+└── ai_documentation.md         # Log of AI-assisted development process
 ```
 
 ---
@@ -154,8 +153,7 @@ Dropout is the dominant mechanism for forgetting resistance (−55% at p=0.5). W
 | [docs/introduction.md](docs/introduction.md) | Paper choice rationale, background, hypotheses |
 | [docs/methodology.md](docs/methodology.md) | Experiment design, deviations, bonus improvements |
 | [docs/results.md](docs/results.md) | Full reproduction table + error analysis |
-| [docs/conclusion.md](docs/conclusion.md) | Conclusions, limitations, future work |
+| [docs/conclusion.md](docs/conclusion.md) | Conclusions, per-scenario analysis, limitations, future work |
 | [docs/ablation.md](docs/ablation.md) | Ablation study results and interpretation |
 | [reproducibility.md](reproducibility.md) | Full environment spec for reproduction |
 | [ai_documentation.md](ai_documentation.md) | AI-assisted development log |
-| [takeaways.md](takeaways.md) | Per-scenario reflection and analysis |
