@@ -10,6 +10,18 @@ The experiment follows the original structure of Goodfellow et al. (2015):
    - Old task error (X axis)
 3. **Drawing the Possibilities Frontier curve** — the lower convex hull of the point cloud, on a logarithmic scale
 
+```python
+# Core sequential training loop (simplified from train_task2_and_log)
+for epoch in range(MAX_EPOCHS):
+    train_one_epoch(model, t2_train, optimizer, hp, epoch)
+    old_err = evaluate_error(model, t1_val)   # Task A — forgetting tracked here
+    new_err = evaluate_error(model, t2_val)   # Task B — learning tracked here
+    trajectory.append((old_test_err, new_test_err))
+    if old_err + new_err < best_joint:
+        best_joint = old_err + new_err
+        best_state = copy_weights(model)      # save best joint checkpoint
+```
+
 ## 8 Conditions
 
 | Activation Function | Algorithm |
@@ -31,9 +43,47 @@ The experiment follows the original structure of Goodfellow et al. (2015):
 - **Max-norm constraint:** dynamic constraint per layer in the range 1.0–5.0, sampled separately for fc1, fc2, fc_out in each trial
 - **Dropout:** dropout_hidden=0.5, dropout_input=0.2 (fixed, not part of the search)
 
+```python
+# Maxout layer — each output unit is the max over k=2 inputs
+class Maxout(nn.Module):
+    def forward(self, x):
+        b, d = x.shape
+        return x.view(b, d // self.pool_size, self.pool_size).max(dim=2).values
+
+# LWTA layer — within each group of k=2, only the winner passes gradients
+class LWTA(nn.Module):
+    def forward(self, x):
+        b, d = x.shape
+        x_g  = x.view(b, d // self.group_size, self.group_size)
+        mask = (x_g >= x_g.max(dim=2, keepdim=True).values).float()
+        return (x_g * mask).view(b, d)
+
+# Max-norm constraint — applied once per epoch after optimizer.step()
+def apply_max_norm_constraint(model, hp):
+    for layer, max_norm in zip([model.fc1, model.fc2, model.fc3],
+                                [hp.col_norm_h0, hp.col_norm_h1, hp.col_norm_out]):
+        W = layer.weight
+        col_norms = W.norm(2, dim=1, keepdim=True)
+        W.mul_(col_norms.clamp(max=max_norm) / col_norms.clamp(min=1e-8))
+```
+
 ## Hyperparameter Search
 
 Random search — 8 trials per condition (paper: 25):
+
+```python
+# sample_hparams() — one random draw per trial
+hp = HParams(
+    hidden_dim     = rng.randint(250, 2000),          # post-activation width
+    lr             = 10 ** rng.uniform(-2.5, -1.0),   # log-uniform
+    final_momentum = rng.uniform(0.5, 0.99),
+    col_norm_h0    = rng.uniform(1.0, 5.0),           # max-norm per layer
+    col_norm_h1    = rng.uniform(1.0, 5.0),
+    col_norm_out   = rng.uniform(1.0, 5.0),
+    irange         = 10 ** rng.uniform(-2.3, -1.0),   # weight init range
+    # ... (momentum schedule, sparse init, bias offsets)
+)
+```
 
 | Parameter | This Reproduction (actual code) | Note |
 |---|---|---|
@@ -83,6 +133,14 @@ Beyond the core reproduction, we introduced five improvements over the original 
 
 ### Improvement 1 — Ablation Study
 
+```python
+# Forgetting metric used in the ablation study (ablation_study.py)
+baseline_old = evaluate_error(model, t1_test)   # Task A error before Task B training
+# ... train on Task B ...
+final_old    = evaluate_error(model, t1_test)   # Task A error after Task B training
+forgetting   = final_old - baseline_old         # positive = catastrophic forgetting
+```
+
 **Code:** `ablation_study.py` — functions `ablation_dropout()` and `ablation_weight_decay()`
 **Docs:** `docs/ablation.md`
 
@@ -102,6 +160,20 @@ This extends the paper's qualitative claim with quantitative evidence for the me
 The original paper uses a lower convex hull on a log scale, but the exact algorithm is not specified. We implemented a strict lower-left Pareto frontier: a point is included only if no other observed point is simultaneously better on both axes.
 
 A convex hull can include dominated points when the point cloud has concave regions. The Pareto frontier never includes dominated points by definition — this is strictly cleaner, and particularly important at low trial counts (8 vs. 25) where the point cloud is sparse.
+
+```python
+# pareto_lower_left() — core logic
+log_pts = np.log10(points)                 # work in log space to match paper axes
+log_pts = log_pts[np.argsort(log_pts[:,0])]  # sort left-to-right by old_error
+
+frontier, min_y = [], float("inf")
+for p in log_pts:
+    if p[1] < min_y:        # only keep points that improve the running y-minimum
+        min_y = p[1]
+        frontier.append(p)  # this point is not dominated by anything to its left
+
+return 10 ** np.array(frontier)   # back to linear scale
+```
 
 ---
 

@@ -6,8 +6,13 @@ To understand *which components* actually drive catastrophic forgetting resistan
 
 **Forgetting rate** is defined as:
 
-```
-forgetting = old_task_error_after_task2_training - old_task_error_after_task1_training
+```python
+# From run_sequential() in ablation_study.py
+baseline_old = evaluate_error(model, t1_test)  # Task A error after Task A training
+# ... train on Task B ...
+final_old    = evaluate_error(model, t1_test)  # Task A error after Task B training
+
+forgetting = final_old - baseline_old          # positive = model forgot Task A
 ```
 
 A higher forgetting rate means the model lost more of its Task A ability after learning Task B. This metric directly quantifies catastrophic forgetting rather than using the composite best_joint score.
@@ -23,6 +28,16 @@ python ablation_study.py
 ## Ablation 1: Dropout Rate
 
 We tested three dropout levels on the hidden layers: **0.0** (no dropout), **0.2**, and **0.5** (the value used in the main experiments, matching the paper).
+
+```python
+# From ablation_dropout() in ablation_study.py
+for p_hid in [0.0, 0.2, 0.5]:
+    p_in  = 0.2 if p_hid > 0 else 0.0        # input dropout matches hidden
+    model = AblationMLP(784, hidden_dim, 10,
+                        p_input=p_in, p_hidden=p_hid)
+    best_joint, forgetting = run_sequential(model, t1_tr, t1_va, t1_te,
+                                            t2_tr, t2_va, t2_te, hp)
+```
 
 | Dropout Rate | Best Joint (mean ± std) | Forgetting Rate (mean ± std) |
 |---|---|---|
@@ -45,6 +60,15 @@ This supports the paper's central claim that Dropout actively reduces catastroph
 ## Ablation 2: Weight Decay
 
 We tested three L2 regularization strengths alongside Dropout (p=0.5): **0** (none), **1e-4**, and **1e-3**.
+
+```python
+# From ablation_weight_decay() in ablation_study.py
+for wd in [0.0, 1e-4, 1e-3]:
+    optimizer = optim.SGD(model.parameters(), lr=hp.lr,
+                          momentum=hp.init_momentum,
+                          weight_decay=wd)       # only this changes between conditions
+    best_joint, forgetting = run_sequential(model, ...)
+```
 
 | Weight Decay | Best Joint (mean ± std) | Forgetting Rate (mean ± std) |
 |---|---|---|
