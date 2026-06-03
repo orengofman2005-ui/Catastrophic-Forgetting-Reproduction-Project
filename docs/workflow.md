@@ -34,6 +34,20 @@ For Scenario 3, `TruncatedSVD` is applied to reduce Amazon features from 5000 to
 | No data leakage in SVD | SVD is fit only on `X_train` — confirmed in `prepare_amazon_npz.py` |
 | Shapes correct | Load any `.npz` and print `data['X'].shape` — should be `(N, 5000)` for Scenarios 2, `(N, 784)` for Scenario 3 |
 
+```python
+# Verify .npz shapes after running prepare_amazon_npz.py
+import numpy as np
+for domain in ["books", "dvd", "electronics", "kitchen"]:
+    d = np.load(f"data/amazon/{domain}.npz")
+    print(f"{domain}: train={d['X_train'].shape}, test={d['X_test'].shape}")
+# Expected: (N, 5000) for all domains
+
+# Verify SVD output for Scenario 3
+from final_experiment_repro import get_amazon_reduced
+train_ldr, val_ldr, test_ldr, dim, n_cls = get_amazon_reduced("data/amazon/dvd.npz", target_dim=784)
+print(f"input_dim={dim}, n_classes={n_cls}")  # Expected: 784, 2
+```
+
 ---
 
 ## Stage 2 — Model Definitions
@@ -57,6 +71,24 @@ For Scenario 3, `TruncatedSVD` is applied to reduce Amazon features from 5000 to
 | Max-norm applied | Print weight norms before and after `apply_max_norm()` — norms should not exceed the ceiling |
 | LWTA zeroes losers | Manually inspect gradients after backward — losing unit in each pair should have zero grad |
 | Dropout active during train | Confirm `model.train()` activates dropout; `model.eval()` deactivates it |
+
+```python
+# Verify all 4 model variants produce correct output shapes
+import torch
+from final_experiment_repro import build_model, sample_hparams, HParams
+import random
+
+x = torch.randn(32, 784)   # batch of 32 MNIST samples
+rng = random.Random(42)
+
+for activation in ["Sigmoid", "ReLU", "Maxout", "LWTA"]:
+    for use_dropout in [False, True]:
+        hp    = sample_hparams(activation, rng)
+        model = build_model(784, 10, activation, use_dropout, hp)
+        out   = model(x)
+        assert out.shape == (32, 10), f"Wrong shape for {activation}"
+        print(f"{activation} + {'Dropout' if use_dropout else 'SGD'}: OK — {out.shape}")
+```
 
 ---
 
@@ -85,6 +117,17 @@ For Scenario 3, `TruncatedSVD` is applied to reduce Amazon features from 5000 to
 | HP sampling is reproducible | Fix `seed=42` and re-run — identical trial order and results |
 | No trial silently fails | Confirm no `best_joint = inf` or `nan` in any trial summary |
 
+```python
+# Verify trial counts and check for diverged trials after the run
+import torch
+
+d = torch.load("results_repro/scenario_1_repro.pt", weights_only=False)
+for cond, trials in d["trial_summaries"].items():
+    joints = [t["best_joint"] for t in trials]
+    bad    = [j for j in joints if j != j or j == float("inf")]  # nan or inf
+    print(f"{cond}: {len(trials)} trials, bad={len(bad)}, best={min(joints):.4f}")
+```
+
 ---
 
 ## Stage 4 — Sequential Training and Frontier Construction
@@ -108,6 +151,23 @@ For Scenario 3, `TruncatedSVD` is applied to reduce Amazon features from 5000 to
 | Forgetting is measurable | Task A error should increase after Task B training begins for SGD conditions |
 | Frontier is monotone | All frontier points should satisfy: no point `p` where another point `q` has `q[0] ≤ p[0]` and `q[1] ≤ p[1]` |
 | Results saved in checkpoint | Load `.pt` file and confirm `trial_summaries` and `results` keys exist with correct structure |
+
+```python
+# Verify the Pareto frontier is strictly monotone (no dominated points)
+import torch
+import numpy as np
+from final_experiment_repro import pareto_lower_left
+
+d = torch.load("results_repro/scenario_1_repro.pt", weights_only=False)
+for cond, trials in d["trial_summaries"].items():
+    all_pts  = [pt for t in trials for pt in t["points"]]
+    frontier = pareto_lower_left(all_pts)
+    # Check: y values must be strictly decreasing left-to-right
+    if len(frontier) > 1:
+        assert all(frontier[i,1] > frontier[i+1,1] for i in range(len(frontier)-1)), \
+            f"Non-monotone frontier in {cond}"
+    print(f"{cond}: {len(frontier)} frontier points — OK")
+```
 
 ---
 
@@ -137,6 +197,19 @@ python plot_results.py
 | Frontier is non-empty | Open each frontier figure — all 8 conditions should appear as labeled curves |
 | Frontier curves do not cross unexpectedly | Visually compare to `paper_figures/Fig{1,3,5}_*.png` — qualitative ordering should match |
 | Error bars reflect variance | Conditions with high std (e.g. Sigmoid) should show visibly wider bars |
+
+```python
+# Verify all expected figure files were produced
+import os
+expected = [
+    f"results_repro/fig_s{s}_{t}.png"
+    for s in [1, 3, 5]
+    for t in ["frontier", "params", "errorbars"]
+]
+for path in expected:
+    status = "OK" if os.path.exists(path) else "MISSING"
+    print(f"{status}  {path}")
+```
 
 ---
 
@@ -168,3 +241,25 @@ Each ablation varies one component at a time, holding everything else fixed (ReL
 | Weight decay effect negligible | Differences across `wd` values should be smaller than 1 std |
 | Figures generated | `ablation_dropout.png` and `ablation_wd.png` exist in `results_repro/` |
 | No diverged trials | `best_joint_std` should not exceed `best_joint_mean` — a std larger than the mean signals a diverged trial |
+
+```python
+# Verify ablation results: monotonic dropout trend + no diverged trials
+import torch
+
+abl = torch.load("results_repro/ablation_results.pt", weights_only=False)
+
+print("Dropout ablation:")
+prev_forg = float("inf")
+for label, v in abl["dropout"].items():
+    forg = v["forgetting_mean"]
+    std  = v["best_joint_std"]
+    mean = v["best_joint_mean"]
+    diverged = "DIVERGED" if std > mean else "OK"
+    print(f"  {label}: forgetting={forg:.4f}  [{diverged}]")
+    assert forg <= prev_forg, f"Non-monotonic forgetting at {label}"
+    prev_forg = forg
+
+print("\nWeight decay ablation:")
+for label, v in abl["weight_decay"].items():
+    print(f"  {label}: forgetting={v['forgetting_mean']:.4f} ± {v['forgetting_std']:.4f}")
+```
