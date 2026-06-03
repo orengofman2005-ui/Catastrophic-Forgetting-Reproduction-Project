@@ -155,5 +155,4 @@ Dropout is the dominant mechanism for forgetting resistance (−55% at p=0.5). W
 | [docs/results.md](docs/results.md) | Full reproduction table + error analysis |
 | [docs/conclusion.md](docs/conclusion.md) | Conclusions, per-scenario analysis, limitations, future work |
 | [docs/ablation.md](docs/ablation.md) | Ablation study results and interpretation |
-| [reproducibility.md](reproducibility.md) | Full environment spec for reproduction |
 | [ai_documentation.md](ai_documentation.md) | AI-assisted development log |
