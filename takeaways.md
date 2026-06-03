@@ -6,11 +6,11 @@ This project reproduced the central experiments of Goodfellow et al. (2015) on c
 
 ## Takeaway 1: The Dual Role of Dropout
 
-The findings are consistent with the claim that Dropout plays a dual role: both as a regularizer preventing overfitting and as a mechanism for reducing the tendency toward catastrophic forgetting. In all three scenarios, Dropout-based methods produced Frontier curves closer to the origin compared to SGD. For example, in Scenario 1, the best_joint of Maxout_Dropout (0.039) is lower than that of Maxout_SGD (0.042), consistent with the paper's hypothesis that Dropout enables training of higher-capacity networks that are more resistant to forgetting.
+The findings are consistent with the claim that Dropout plays a dual role: both as a regularizer preventing overfitting and as a mechanism for reducing the tendency toward catastrophic forgetting. In all three scenarios, Dropout-based methods produced the top-ranked conditions. For example, in Scenario 1, Maxout_Dropout (0.039) beats Maxout_SGD (0.042); in Scenario 3, ReLU_Dropout (0.151) and Maxout_Dropout (0.161) rank 1–2. This is consistent with the paper's hypothesis that Dropout enables training of higher-capacity networks that are more resistant to forgetting.
 
 ## Takeaway 2: Scenario-Dependent Activation Function Ranking
 
-The ranking of activation functions is not universal and varies across scenarios — a finding consistent with the original paper. In Scenario 1 (Input Reformatting), Maxout shows a clear advantage (best_joint=0.039) over Sigmoid (0.173). In Scenario 3 (Dissimilar Tasks), the gaps between methods narrow significantly (range 0.170–0.259), indicating uniform difficulty for all methods when dealing with semantically different task pairs. This finding reinforces the recommendation to cross-validate the choice of activation function for each task pair.
+The ranking of activation functions is not universal and varies across scenarios — a finding consistent with the original paper. In Scenario 1 (Input Reformatting), Maxout leads (best_joint=0.039). In Scenario 2, ReLU is best (0.309). In Scenario 3 (Dissimilar Tasks), ReLU+Dropout ranks first (0.151), and the gaps between non-Sigmoid methods narrow (range 0.151–0.205 excluding Sigmoid), indicating broadly comparable difficulty for most methods when tasks are semantically dissimilar. This finding reinforces the recommendation to cross-validate the choice of activation function for each task pair.
 
 ## Takeaway 3: Scenario 2 Analysis — Similar Tasks (Amazon Kitchen -> DVD)
 
@@ -61,4 +61,4 @@ Fig6 shows that the LWTA model is allocated the highest parameter capacity. Howe
 
 ## Summary: Were the Trends Reproduced?
 
-Comparing the produced findings against the figures in the original paper, the key qualitative trends are consistent with the paper in all three scenarios: Frontier curves of Dropout-based methods are closer to the origin, and the ranking of activation functions varies between scenarios. It should be noted that these findings were achieved with only 8 trials (32% of the paper's HP space coverage) and a single seed, and should therefore be treated as qualitative support only — not as full quantitative validation.
+The key qualitative trends are consistent with the paper in Scenarios 1 and 2 (full ranking match). In Scenario 3, Dropout methods rank 1–2 as expected, but within the SGD group the ordering diverges from the paper — attributable to the SVD feature-reduction deviation and 8-trial HP search. Overall the paper's central conclusions are supported. These findings are based on 8 trials (32% of the paper's HP space coverage) and a single seed, and should be treated as qualitative support only — not full quantitative validation.

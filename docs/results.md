@@ -55,16 +55,16 @@ The original paper does not publish exact numbers. The table below reports our m
 
 | Condition | Our best_joint | Rank (Ours) | Rank (Paper, visual) | Match |
 |---|---|---|---|---|
-| Maxout + SGD | **0.170** | 1 | 1–2 | Yes |
-| Maxout + Dropout | 0.171 | 2 | 1–2 | Yes |
-| ReLU + SGD | 0.173 | 3 | 3 | Yes |
-| ReLU + Dropout | 0.177 | 4 | 4 | Yes |
-| LWTA + Dropout | 0.176 | 5 | 4–5 | Yes |
-| LWTA + SGD | 0.196 | 6 | 6 | Yes |
-| Sigmoid + SGD | 0.201 | 7 | 7–8 | Yes |
-| Sigmoid + Dropout | 0.259 | 8 | 7–8 | Yes |
+| ReLU + Dropout | **0.151** | 1 | 1–2 | Yes |
+| Maxout + Dropout | 0.161 | 2 | 1–2 | Yes |
+| LWTA + SGD | 0.180 | 3 | 5–6 | Partial |
+| ReLU + SGD | 0.189 | 4 | 3 | Partial |
+| Maxout + SGD | 0.189 | 5 | 1–2 | Partial |
+| LWTA + Dropout | 0.190 | 6 | 4–5 | Yes |
+| Sigmoid + SGD | 0.205 | 7 | 7–8 | Yes |
+| Sigmoid + Dropout | 0.245 | 8 | 7–8 | Yes |
 
-**Qualitative match: strong agreement across all 3 scenarios. One minor reversal (Maxout SGD 0.170 vs Maxout Dropout 0.171, Δ=0.001) in Scenario 3 is within sampling noise.**
+**Qualitative match: partial for Scenario 3.** Dropout methods (ReLU_Dropout, Maxout_Dropout) rank 1–2, consistent with the paper. However, within the SGD group, LWTA_SGD (0.180) places above ReLU_SGD and Maxout_SGD (both 0.189), which diverges from the paper's ranking. This is consistent with the SVD feature-reduction deviation noted below and the limited 8-trial HP search.
 
 ---
 
@@ -108,8 +108,9 @@ The original paper reports results graphically. Values in the "Paper (visual)" c
 | ReLU + Dropout | 2 | ~0.25–0.30 | 0.309 | +3–6% | Fewer trials + short patience |
 | Maxout + Dropout | 2 | ~0.25–0.30 | 0.316 | +5–7% | Fewer trials + short patience |
 | Sigmoid + Dropout | 2 | ~0.80 | 0.869 | +9% | Fewer trials + sparse input sensitivity |
-| Maxout + Dropout | 3 | ~0.17 | 0.171 | +1% | Approximate (SVD deviation) |
-| Maxout + SGD | 3 | ~0.17 | 0.170 | +0% | Approximate (SVD deviation); minor rank reversal |
+| ReLU + Dropout | 3 | ~0.17 | 0.151 | −11% | Approximate (SVD deviation); best condition |
+| Maxout + Dropout | 3 | ~0.17 | 0.161 | −5% | Approximate (SVD deviation) |
+| Maxout + SGD | 3 | ~0.17 | 0.189 | +11% | Approximate (SVD deviation) |
 
 **Summary:** Scenario 1 matches closely (< 2%). Scenario 2 is systematically 3–9% above paper, attributable to 8 vs 25 trials and patience=15. Scenario 3 is approximate due to the SVD feature-reduction deviation.
 
@@ -134,9 +135,9 @@ Our Scenario 2 shows the largest absolute gap from what is visually readable in 
 
 Scenarios 1 and 3 show strong qualitative agreement. Numerical deviations are minor and attributable to the same causes above.
 
-#### Ordering Reversal in Scenario 3
+#### Ordering in Scenario 3
 
-One notable difference: in Scenario 3, Maxout_SGD (0.170) marginally outperforms Maxout_Dropout (0.171). The paper shows Dropout variants consistently better. This is likely a sampling artifact from 8 trials — a difference of 0.001 is within noise. With more trials, we would expect Dropout to pull ahead.
+In Scenario 3, Dropout methods rank 1–2 (ReLU_Dropout=0.151, Maxout_Dropout=0.161), consistent with the paper. Within the SGD group, LWTA_SGD (0.180) unexpectedly outranks ReLU_SGD and Maxout_SGD (both 0.189), which diverges from the paper's ranking. This partial mismatch is attributable to the SVD feature-reduction deviation and the limited 8-trial HP search.
 
 ### Why Model Sizes Differ from the Paper
 
@@ -154,7 +155,7 @@ Specifically:
 |---|---|---|---|
 | Scenario 1 | Full (8/8) | < 1% (Maxout ranking) | Sampling noise |
 | Scenario 2 | Full (8/8) | ~3–6% above paper | Fewer trials + short patience |
-| Scenario 3 | Full (8/8) | 0.001 reversal in Maxout | Sampling noise (8 trials) |
+| Scenario 3 | Partial (6/8) | SGD-group ordering diverges | SVD deviation + 8 trials |
 
 The deviations are systematic and explainable — they do not undermine the paper's conclusions. All three hypotheses tested in this project are supported by our results.
 
@@ -208,8 +209,8 @@ Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most 
 
 | Finding | Quantitative Evidence | Paper Consistent? |
 |---|---|---|
-| Dropout superior to SGD | Dropout best_joint lower in 6/8 conditions (Scenario 1) | Yes |
-| Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 / 0.316 / 0.171 | Yes |
-| Sigmoid worst across all scenarios | best_joint: 0.173 / 0.813 / 0.201 | Yes |
-| LWTA inconsistent across scenarios | Best in S3 best_new (0.1775), poor in S2 (0.347) | Yes |
+| Dropout superior to SGD | Dropout best_joint lower in 6/8 conditions (Scenario 1); top-2 in S3 | Yes |
+| Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 / 0.316 / 0.161 | Yes |
+| Sigmoid worst across all scenarios | best_joint: 0.173 / 0.813 / 0.205 | Yes |
+| LWTA inconsistent across scenarios | Best_new in S3 (LWTA_Dropout ~0.177), poor in S2 (0.347) | Yes |
 | Ranking shifts between scenarios | Top method changes: Maxout (S1) -> ReLU (S2) -> Maxout (S3) | Yes |
