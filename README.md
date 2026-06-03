@@ -151,8 +151,7 @@ Dropout is the dominant mechanism for forgetting resistance (−55% at p=0.5). W
 | File | Contents |
 |---|---|
 | [docs/introduction.md](docs/introduction.md) | Paper choice rationale, background, hypotheses |
-| [docs/methodology.md](docs/methodology.md) | Experiment design, deviations, bonus improvements |
-| [docs/workflow.md](docs/workflow.md) | Work stages and verification steps per stage |
+| [docs/methodology.md](docs/methodology.md) | Experiment design, workflow stages, verification steps, deviations |
 | [docs/results.md](docs/results.md) | Full reproduction table + error analysis |
 | [docs/conclusion.md](docs/conclusion.md) | Conclusions, per-scenario analysis, limitations, future work |
 | [docs/ablation.md](docs/ablation.md) | Ablation study results and interpretation |
