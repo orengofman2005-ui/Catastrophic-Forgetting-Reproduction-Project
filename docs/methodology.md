@@ -140,8 +140,14 @@ for activation in ["Sigmoid", "ReLU", "Maxout", "LWTA"]:
 
 ```python
 # sample_hparams() — one random draw per trial
+# hidden_dim is capped lower for Maxout/LWTA because pre-activation width = hidden_dim × k
+if activation in {"Maxout", "LWTA"}:
+    hidden_dim = rng.randint(250, 1000)   # pre-act up to 4000 units (k≤4)
+else:
+    hidden_dim = rng.randint(250, 2000)   # ReLU/Sigmoid: no expansion
+
 hp = HParams(
-    hidden_dim     = rng.randint(250, 2000),          # post-activation width
+    hidden_dim     = hidden_dim,
     lr             = 10 ** rng.uniform(-2.5, -1.0),   # log-uniform
     final_momentum = rng.uniform(0.5, 0.99),
     col_norm_h0    = rng.uniform(1.0, 5.0),           # max-norm per layer
@@ -191,12 +197,14 @@ for cond, trials in d["trial_summaries"].items():
 # Core sequential training loop (simplified from train_task2_and_log)
 for epoch in range(MAX_EPOCHS):
     train_one_epoch(model, t2_train, optimizer, hp, epoch)
-    old_err = evaluate_error(model, t1_val)   # Task A — forgetting tracked here
-    new_err = evaluate_error(model, t2_val)   # Task B — learning tracked here
-    trajectory.append((old_test_err, new_test_err))
-    if old_err + new_err < best_joint:
-        best_joint = old_err + new_err
-        best_state = copy_weights(model)      # save best joint checkpoint
+    old_val  = evaluate_error(model, t1_val)    # Task A val — used for early stopping
+    new_val  = evaluate_error(model, t2_val)    # Task B val — used for early stopping
+    old_test = evaluate_error(model, t1_test)   # Task A test — logged for frontier
+    new_test = evaluate_error(model, t2_test)   # Task B test — logged for frontier
+    trajectory.append((old_test, new_test))
+    if old_val + new_val < best_joint:
+        best_joint = old_val + new_val
+        best_state = copy_weights(model)        # save best joint checkpoint
 ```
 
 The Pareto frontier is computed from the union of all trial trajectories:
