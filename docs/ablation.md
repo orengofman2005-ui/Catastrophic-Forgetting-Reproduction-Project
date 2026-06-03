@@ -1,4 +1,8 @@
-# Ablation Study
+# Ablation Study — Bonus Extension
+
+> **Bonus:** This ablation study was not part of the original Goodfellow et al. (2015) paper. It is submitted as a bonus improvement under two criteria:
+> - **"Proposing an alternative approach to data analysis"** — instead of comparing only final error values, we isolate the contribution of each component (Dropout rate, Weight Decay) through controlled single-variable experiments.
+> - **"Improving data presentation"** — the error-bar figures add mean ± std information that is entirely absent from the original paper's graphical results.
 
 ## Overview
 

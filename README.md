@@ -157,7 +157,9 @@ After a complete run, `results_repro/` should contain:
 
 ---
 
-## Ablation Study
+## Ablation Study — Bonus Extension
+
+> **Bonus:** This section goes beyond the original paper and is submitted as an improvement under the criterion **"Proposing an alternative approach to data analysis"** — instead of comparing only final results, the ablation isolates *why* Dropout works by varying one component at a time in a controlled setup. The error-bar figures also qualify under **"Improving data presentation"** as they add variance information absent from the original paper.
 
 Beyond reproduction, we ran controlled ablation experiments to isolate the mechanisms behind Dropout's forgetting resistance. Key results:
 
