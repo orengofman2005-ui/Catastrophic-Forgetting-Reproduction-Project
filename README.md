@@ -61,7 +61,6 @@ Dropout methods rank 1–2 in all 3 scenarios. In Scenario 3, ReLU+Dropout (0.15
 ├── plot_results.py             # Generate Frontier, model-size, and error-bar figures
 ├── prepare_amazon_npz.py       # Preprocess Amazon Reviews -> .npz files
 ├── ablation_study.py           # Ablation: Dropout rate / Weight decay
-├── requirements.txt            # Python dependencies
 │
 ├── docs/
 │   ├── introduction.md         # Background, why we chose this paper, hypotheses
