@@ -59,7 +59,7 @@ Dropout methods rank 1–2 in all 3 scenarios. In Scenario 3, ReLU+Dropout (0.15
 *Values are best_joint (old_error + new_error). Lower is better. Bold = best per scenario.*
 
 **Key findings:**
-- Dropout outperforms SGD in 6/8 conditions (Scenario 1) — consistent with the paper
+- Dropout outperforms SGD in 3/4 activation functions (Scenario 1) — consistent with the paper
 - ReLU+Dropout is best in Scenario 3; Maxout+Dropout is best in Scenario 1 — no universal winner
 - Activation function ranking shifts between scenarios — no universal winner
 

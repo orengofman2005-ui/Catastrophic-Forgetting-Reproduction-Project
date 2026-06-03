@@ -8,7 +8,7 @@ The research question posed: *Can the central conclusions of Goodfellow et al. (
 
 | Hypothesis | Result | Evidence |
 |---|---|---|
-| Dropout superior to SGD in all scenarios | Consistent with the paper | Dropout best_joint lower than SGD in 6 out of 8 conditions in Scenario 1 |
+| Dropout superior to SGD in all scenarios | Consistent with the paper | Dropout best_joint lower than SGD in 3 out of 4 activation functions in Scenario 1 |
 | Maxout+Dropout on Frontier in every scenario | Consistent with the paper | best_joint: 0.039 / 0.316 / 0.161 in Scenarios 1/2/3 |
 | Activation function ranking is scenario-dependent | Consistent with the paper | ReLU leads in S2–S3, Maxout leads in S1 |
 

@@ -209,7 +209,7 @@ Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most 
 
 | Finding | Quantitative Evidence | Paper Consistent? |
 |---|---|---|
-| Dropout superior to SGD | Dropout best_joint lower in 6/8 conditions (Scenario 1); top-2 in S3 | Yes |
+| Dropout superior to SGD | Dropout best_joint lower in 3/4 activation functions (Scenario 1); top-2 in S3 | Yes |
 | Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 / 0.316 / 0.161 | Yes |
 | Sigmoid worst across all scenarios | best_joint: 0.173 / 0.813 / 0.205 | Yes |
 | LWTA inconsistent across scenarios | Best_new in S3 (LWTA_Dropout ~0.177), poor in S2 (0.347) | Yes |
