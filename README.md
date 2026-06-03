@@ -121,12 +121,12 @@ After a complete run, `results_repro/` should contain:
 
 | Figure | Original (Paper) | Ours (Reproduced) |
 |---|---|---|
-| Figure 1 — Frontier, Input Reformatting | ![](paper_figures/Fig1_original.png) | ![](paper_figures/Fig1_frontier_input_reformatting.png) |
-| Figure 2 — Model Sizes, Input Reformatting | ![](paper_figures/Fig2_original.png) | ![](paper_figures/Fig2_model_sizes_input_reformatting.png) |
-| Figure 3 — Frontier, Similar Tasks | ![](paper_figures/Fig3_original.png) | ![](paper_figures/Fig3_frontier_similar_tasks.png) |
-| Figure 4 — Model Sizes, Similar Tasks | ![](paper_figures/Fig4_original.png) | ![](paper_figures/Fig4_model_sizes_similar_tasks.png) |
-| Figure 5 — Frontier, Dissimilar Tasks | ![](paper_figures/Fig5_original.png) | ![](paper_figures/Fig5_frontier_dissimilar_tasks.png) |
-| Figure 6 — Model Sizes, Dissimilar Tasks | ![](paper_figures/Fig6_original.png) | ![](paper_figures/Fig6_model_sizes_dissimilar_tasks.png) |
+| Figure 1 — Frontier, Input Reformatting | <img src="paper_figures/Fig1_original.png" width="350"/> | <img src="paper_figures/Fig1_frontier_input_reformatting.png" width="350"/> |
+| Figure 2 — Model Sizes, Input Reformatting | <img src="paper_figures/Fig2_original.png" width="350"/> | <img src="paper_figures/Fig2_model_sizes_input_reformatting.png" width="350"/> |
+| Figure 3 — Frontier, Similar Tasks | <img src="paper_figures/Fig3_original.png" width="350"/> | <img src="paper_figures/Fig3_frontier_similar_tasks.png" width="350"/> |
+| Figure 4 — Model Sizes, Similar Tasks | <img src="paper_figures/Fig4_original.png" width="350"/> | <img src="paper_figures/Fig4_model_sizes_similar_tasks.png" width="350"/> |
+| Figure 5 — Frontier, Dissimilar Tasks | <img src="paper_figures/Fig5_original.png" width="350"/> | <img src="paper_figures/Fig5_frontier_dissimilar_tasks.png" width="350"/> |
+| Figure 6 — Model Sizes, Dissimilar Tasks | <img src="paper_figures/Fig6_original.png" width="350"/> | <img src="paper_figures/Fig6_model_sizes_dissimilar_tasks.png" width="350"/> |
 
 ---
 
