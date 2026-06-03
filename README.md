@@ -119,39 +119,39 @@ After a complete run, `results_repro/` should contain:
 
 ## Reproduced Figures
 
-### Figure 1 — Frontier, Input Reformatting
-<p><b>Original (Paper)</b><br><img src="paper_figures/Fig1_original.png" width="800"/></p>
-<p><b>Ours (Reproduced)</b><br><img src="paper_figures/Fig1_frontier_input_reformatting.png" width="800"/></p>
-
----
-
-### Figure 2 — Model Sizes, Input Reformatting
-<p><b>Original (Paper)</b><br><img src="paper_figures/Fig2_original.png" width="800"/></p>
-<p><b>Ours (Reproduced)</b><br><img src="paper_figures/Fig2_model_sizes_input_reformatting.png" width="800"/></p>
-
----
-
-### Figure 3 — Frontier, Similar Tasks
-<p><b>Original (Paper)</b><br><img src="paper_figures/Fig3_original.png" width="800"/></p>
-<p><b>Ours (Reproduced)</b><br><img src="paper_figures/Fig3_frontier_similar_tasks.png" width="800"/></p>
-
----
-
-### Figure 4 — Model Sizes, Similar Tasks
-<p><b>Original (Paper)</b><br><img src="paper_figures/Fig4_original.png" width="800"/></p>
-<p><b>Ours (Reproduced)</b><br><img src="paper_figures/Fig4_model_sizes_similar_tasks.png" width="800"/></p>
-
----
-
-### Figure 5 — Frontier, Dissimilar Tasks
-<p><b>Original (Paper)</b><br><img src="paper_figures/Fig5_original.png" width="800"/></p>
-<p><b>Ours (Reproduced)</b><br><img src="paper_figures/Fig5_frontier_dissimilar_tasks.png" width="800"/></p>
-
----
-
-### Figure 6 — Model Sizes, Dissimilar Tasks
-<p><b>Original (Paper)</b><br><img src="paper_figures/Fig6_original.png" width="800"/></p>
-<p><b>Ours (Reproduced)</b><br><img src="paper_figures/Fig6_model_sizes_dissimilar_tasks.png" width="800"/></p>
+<table>
+<tr><th>Figure</th><th>Original (Paper)</th><th>Ours (Reproduced)</th></tr>
+<tr>
+  <td>Figure 1<br>Frontier<br>Input Reformatting</td>
+  <td><img src="paper_figures/Fig1_original.png" width="380"/></td>
+  <td><img src="paper_figures/Fig1_frontier_input_reformatting.png" width="380"/></td>
+</tr>
+<tr>
+  <td>Figure 2<br>Model Sizes<br>Input Reformatting</td>
+  <td><img src="paper_figures/Fig2_original.png" width="380"/></td>
+  <td><img src="paper_figures/Fig2_model_sizes_input_reformatting.png" width="380"/></td>
+</tr>
+<tr>
+  <td>Figure 3<br>Frontier<br>Similar Tasks</td>
+  <td><img src="paper_figures/Fig3_original.png" width="380"/></td>
+  <td><img src="paper_figures/Fig3_frontier_similar_tasks.png" width="380"/></td>
+</tr>
+<tr>
+  <td>Figure 4<br>Model Sizes<br>Similar Tasks</td>
+  <td><img src="paper_figures/Fig4_original.png" width="380"/></td>
+  <td><img src="paper_figures/Fig4_model_sizes_similar_tasks.png" width="380"/></td>
+</tr>
+<tr>
+  <td>Figure 5<br>Frontier<br>Dissimilar Tasks</td>
+  <td><img src="paper_figures/Fig5_original.png" width="380"/></td>
+  <td><img src="paper_figures/Fig5_frontier_dissimilar_tasks.png" width="380"/></td>
+</tr>
+<tr>
+  <td>Figure 6<br>Model Sizes<br>Dissimilar Tasks</td>
+  <td><img src="paper_figures/Fig6_original.png" width="380"/></td>
+  <td><img src="paper_figures/Fig6_model_sizes_dissimilar_tasks.png" width="380"/></td>
+</tr>
+</table>
 
 ---
 
