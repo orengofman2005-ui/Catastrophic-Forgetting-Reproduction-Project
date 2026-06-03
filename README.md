@@ -3,10 +3,6 @@
 > **Reproduction of:** "An Empirical Investigation of Catastrophic Forgetting in Gradient-Based Neural Networks"
 > Goodfellow, Mirza, Xiao, Courville, Bengio — arXiv:1312.6211, 2015
 
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
-[![PyTorch 2.1](https://img.shields.io/badge/pytorch-2.1-orange.svg)](https://pytorch.org/)
-[![CUDA 11.8](https://img.shields.io/badge/CUDA-11.8-green.svg)](https://developer.nvidia.com/cuda-toolkit)
-[![GPU GTX 1660 Super](https://img.shields.io/badge/GPU-GTX%201660%20Super-76b900.svg)](https://www.nvidia.com/)
 
 ---
 
