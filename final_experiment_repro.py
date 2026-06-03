@@ -65,6 +65,7 @@ TOTAL_MODELS_PER_SCENARIO = TOTAL_CONDITIONS * TRIALS_PER_CONDITION
 # =============================================================================
 
 def set_seed(seed: int) -> None:
+    """Set all global random seeds (Python, NumPy, PyTorch, CUDA) for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -73,10 +74,18 @@ def set_seed(seed: int) -> None:
 
 
 def count_parameters(model: nn.Module) -> int:
+    """Return total number of trainable parameters in the model."""
     return sum(p.numel() for p in model.parameters())
 
 
 def apply_max_norm_constraint(model: nn.Module, hp: "HParams") -> None:
+    """
+    Project each layer's weight matrix so that no row exceeds its max-norm ceiling.
+
+    Applied once per epoch (not per batch) to match the original Pylearn2 implementation.
+    The ceiling values (col_norm_h0, col_norm_h1, col_norm_out) are sampled per trial
+    from U[1.0, 5.0] independently for each layer.
+    """
     norms_cfg = [hp.col_norm_h0, hp.col_norm_h1, hp.col_norm_out]
     with torch.no_grad():
         for layer, max_norm in zip([model.fc1, model.fc2, model.fc3], norms_cfg):
@@ -88,6 +97,12 @@ def apply_max_norm_constraint(model: nn.Module, hp: "HParams") -> None:
 
 
 def evaluate_error(model: nn.Module, loader: DataLoader) -> float:
+    """
+    Compute classification error (1 - accuracy) over a DataLoader.
+
+    Sets model to eval mode (disabling Dropout/BN), then restores no state.
+    Returns a float in [0, 1].
+    """
     model.eval()
     total, correct = 0, 0
     with torch.no_grad():
@@ -99,6 +114,16 @@ def evaluate_error(model: nn.Module, loader: DataLoader) -> float:
 
 
 def _split_dataset(dataset, n_val: int):
+    """
+    Randomly split a dataset into (train, val) subsets.
+
+    Args:
+        dataset: any PyTorch Dataset
+        n_val:   number of samples to reserve for validation
+
+    Returns:
+        (train_subset, val_subset)
+    """
     n   = len(dataset)
     idx = torch.randperm(n).tolist()
     return Subset(dataset, idx[n_val:]), Subset(dataset, idx[:n_val])
@@ -119,6 +144,17 @@ class _PermuteFlat:
 
 
 def get_permuted_mnist_loaders(permutation, batch_size=BATCH_SIZE, val_size=2000):
+    """
+    Return (train, val, test) DataLoaders for MNIST with a fixed pixel permutation.
+
+    Used in Scenario 1: both Task A and Task B are MNIST with different permutations,
+    so the network must relearn the pixel layout while retaining abstract digit features.
+
+    Args:
+        permutation: 1-D LongTensor of length 784 — the pixel permutation to apply
+        batch_size:  mini-batch size
+        val_size:    number of training samples held out for validation
+    """
     transform = transforms.Compose([
         transforms.ToTensor(),
         _PermuteFlat(permutation),
@@ -136,6 +172,18 @@ def get_permuted_mnist_loaders(permutation, batch_size=BATCH_SIZE, val_size=2000
 
 def get_padded_binary_mnist_loaders(target_dim, classes=(2, 9),
                                     batch_size=BATCH_SIZE, val_size=1000):
+    """
+    Return (train, val, test) DataLoaders for a binary MNIST subset, zero-padded to target_dim.
+
+    Used in Scenario 3 (Task A): MNIST digits 2 vs 9 are mapped to labels {0, 1}
+    and padded with zeros so the input dimension matches the Amazon SVD representation.
+
+    Args:
+        target_dim: desired input dimensionality (must be >= 784)
+        classes:    the two MNIST digit classes to include (default: 2 and 9)
+        batch_size: mini-batch size
+        val_size:   number of training samples held out for validation
+    """
     def remap(y): return 0 if y == classes[0] else 1
     pad_len = target_dim - 784
     transform = transforms.Compose([
@@ -165,6 +213,20 @@ def get_padded_binary_mnist_loaders(target_dim, classes=(2, 9),
 
 
 def get_amazon_from_npz(npz_path, batch_size=BATCH_SIZE, val_ratio=0.2):
+    """
+    Load a pre-processed Amazon Reviews .npz file and return DataLoaders.
+
+    Used in Scenario 2: both tasks are Amazon Reviews (same 5000-dim bag-of-words),
+    so no dimensionality reduction is needed.
+
+    Args:
+        npz_path:   path to the .npz file produced by prepare_amazon_npz.py
+        batch_size: mini-batch size
+        val_ratio:  fraction of training data to hold out for validation
+
+    Returns:
+        (train_loader, val_loader, test_loader, input_dim, n_classes)
+    """
     data      = np.load(npz_path, allow_pickle=True)
     X_tr_full = torch.tensor(data["X_train"], dtype=torch.float32)
     y_tr_full = torch.tensor(data["y_train"], dtype=torch.long)
@@ -329,6 +391,21 @@ class HParams:
 
 
 def sample_hparams(activation: str, rng: random.Random) -> HParams:
+    """
+    Draw one random hyperparameter configuration for a given activation function.
+
+    Hidden layer size is capped lower for Maxout/LWTA because their pre-activation
+    width is hidden_dim * k, which would otherwise push parameter counts into the
+    tens of millions. All other ranges are log-uniform or uniform as described in
+    docs/methodology.md.
+
+    Args:
+        activation: one of {"Sigmoid", "ReLU", "Maxout", "LWTA"}
+        rng:        a seeded random.Random instance (caller manages the seed)
+
+    Returns:
+        HParams dataclass with all fields populated
+    """
     # hidden_dim is always the POST-activation width.
     # For Maxout/LWTA the pre-activation layer is hidden_dim * k, so we cap
     # hidden_dim tighter there to keep parameter counts sane (≤ ~5M).
@@ -366,6 +443,16 @@ def sample_hparams(activation: str, rng: random.Random) -> HParams:
 
 
 def _get_lr_momentum(hp: HParams, epoch: int) -> Tuple[float, float]:
+    """
+    Compute the current learning rate and momentum for a given epoch.
+
+    Both follow a linear schedule:
+      - LR decays from hp.lr to hp.lr * hp.lr_decay over [0, hp.lr_sat] epochs
+      - Momentum rises from hp.init_momentum to hp.final_momentum over [0, hp.momentum_sat] epochs
+
+    Returns:
+        (lr, momentum) floats for this epoch
+    """
     frac_lr  = min(1.0, epoch / max(hp.lr_sat, 1))
     lr       = hp.lr * (1 - frac_lr) + hp.lr * hp.lr_decay * frac_lr
     frac_m   = min(1.0, epoch / max(hp.momentum_sat, 1))
@@ -374,6 +461,19 @@ def _get_lr_momentum(hp: HParams, epoch: int) -> Tuple[float, float]:
 
 
 def build_model(input_dim, output_dim, activation, use_dropout, hp):
+    """
+    Instantiate an MLP with the given architecture and move it to DEVICE.
+
+    Args:
+        input_dim:    number of input features
+        output_dim:   number of output classes
+        activation:   one of {"Sigmoid", "ReLU", "Maxout", "LWTA"}
+        use_dropout:  whether to apply input (p=0.2) and hidden (p=0.5) dropout
+        hp:           HParams dataclass with hidden_dim, k, and init fields
+
+    Returns:
+        MLP instance on DEVICE
+    """
     return MLP(input_dim, hp.hidden_dim, output_dim,
                activation, use_dropout, pool_size=hp.k,
                hp=hp.__dict__).to(DEVICE)
@@ -384,6 +484,21 @@ def build_model(input_dim, output_dim, activation, use_dropout, hp):
 # =============================================================================
 
 def train_one_epoch(model, loader, optimizer, hp, epoch, epoch_bar=None):
+    """
+    Run one full pass over the training data, update LR/momentum, and apply max-norm.
+
+    The LR and momentum are updated at the start of each epoch via the linear
+    schedule defined in _get_lr_momentum. Max-norm constraint is applied once
+    after all batches in the epoch are processed.
+
+    Args:
+        model:     the MLP to train (set to train mode internally)
+        loader:    DataLoader for the current task's training set
+        optimizer: SGD optimizer — param groups are mutated in-place each epoch
+        hp:        HParams for the schedule and norm constraint
+        epoch:     current epoch index (0-based), used to compute the schedule
+        epoch_bar: optional tqdm bar to advance by 1 after the epoch
+    """
     model.train()
     criterion = nn.CrossEntropyLoss()
     lr, momentum = _get_lr_momentum(hp, epoch)
@@ -403,6 +518,25 @@ def train_one_epoch(model, loader, optimizer, hp, epoch, epoch_bar=None):
 def train_task1(model, train_ldr, val_ldr, optimizer, hp,
                 max_epochs=MAX_EPOCHS_OLD, patience=PATIENCE_OLD,
                 desc="Task1"):
+    """
+    Train a model on Task A until early stopping, then restore the best checkpoint.
+
+    Early stopping monitors validation error: if it does not improve for `patience`
+    consecutive epochs, training stops and the best seen weights are restored.
+
+    Args:
+        model:      MLP to train (modified in-place)
+        train_ldr:  Task A training DataLoader
+        val_ldr:    Task A validation DataLoader (used for early stopping)
+        optimizer:  SGD optimizer
+        hp:         HParams for the LR/momentum schedule and max-norm
+        max_epochs: hard epoch cap (safety net; early stopping usually fires first)
+        patience:   number of epochs without improvement before stopping
+        desc:       label shown in the tqdm progress bar
+
+    Returns:
+        The model with weights restored to the best validation checkpoint
+    """
     best_val, best_state, stale = float("inf"), {k: v.clone() for k, v in model.state_dict().items()}, 0
     # progress bar over epochs — updated every epoch
     with tqdm(total=max_epochs, desc=f"    {desc}", unit="ep",
@@ -426,6 +560,30 @@ def train_task2_and_log(model, t1_val, t1_test, t2_train, t2_val, t2_test,
                         optimizer, hp,
                         max_epochs=MAX_EPOCHS_NEW, patience=PATIENCE_NEW,
                         desc="Task2"):
+    """
+    Train on Task B while logging (old_test_error, new_test_error) at every epoch.
+
+    The model starts from its Task A weights and is trained on Task B with early
+    stopping on the joint validation error (old_val + new_val). At each epoch the
+    test errors on both tasks are recorded to build the Possibilities Frontier.
+
+    Args:
+        model:     MLP already trained on Task A (modified in-place)
+        t1_val:    Task A validation loader (used for joint early stopping)
+        t1_test:   Task A test loader (used for frontier point logging)
+        t2_train:  Task B training loader
+        t2_val:    Task B validation loader (used for joint early stopping)
+        t2_test:   Task B test loader (used for frontier point logging)
+        optimizer: SGD optimizer (shared with Task A training)
+        hp:        HParams for the schedule and max-norm
+        max_epochs: hard epoch cap
+        patience:  epochs without improvement in joint val error before stopping
+        desc:      label for the tqdm progress bar
+
+    Returns:
+        trajectory:  list of (old_test_error, new_test_error) tuples, one per epoch
+        best_joint:  minimum (old_val + new_val) observed during training
+    """
     best_joint, best_state, stale = float("inf"), {k: v.clone() for k, v in model.state_dict().items()}, 0
     trajectory = []
     LOG_INTERVAL = 1  # every epoch — MLP is small, eval is negligible; Pareto needs density
@@ -469,6 +627,28 @@ def run_hyperparameter_search(scenario_name, t1_train, t1_val, t1_test,
                                t2_train, t2_val, t2_test,
                                input_dim, output_dim,
                                trials_per_condition=TRIALS_PER_CONDITION):
+    """
+    Run the full random HP search over all 8 conditions for one scenario.
+
+    For each (activation, optimizer) pair, runs `trials_per_condition` independent
+    trials with randomly sampled hyperparameters. After each condition, a checkpoint
+    is saved so the run can be safely interrupted and resumed.
+
+    Args:
+        scenario_name:        string identifier used in checkpoint filenames
+        t1_train/val/test:    DataLoaders for Task A
+        t2_train/val/test:    DataLoaders for Task B
+        input_dim:            number of input features (shared by both tasks)
+        output_dim:           number of output classes (shared by both tasks)
+        trials_per_condition: number of random HP trials per condition (default 8)
+
+    Returns:
+        dict with keys:
+            scenario_name:   the scenario identifier
+            results:         {condition: [list of (old_err, new_err) points]}
+            trial_summaries: {condition: [list of trial dicts with hp, best_joint, etc.]}
+            winning_models:  {condition: parameter count of the best trial's model}
+    """
     all_results, trial_summaries, winning_models = {}, {}, {}
 
     # main progress bar — over all models in the scenario
@@ -555,6 +735,24 @@ STYLE_MAP = {
 
 
 def pareto_lower_left(points) -> np.ndarray:
+    """
+    Compute the lower-left Pareto frontier of a point cloud on a log scale.
+
+    A point is included in the frontier only if no other point is simultaneously
+    better (lower) on both axes. Points are sorted by x, then the y-minimum is
+    tracked left-to-right — a new frontier point is added whenever it improves
+    the running y-minimum.
+
+    This is stricter than a convex hull (which can include dominated points in
+    concave regions), and is preferred at low trial counts where the cloud is sparse.
+
+    Args:
+        points: array-like of shape (N, 2), each row is (old_error, new_error)
+
+    Returns:
+        np.ndarray of shape (K, 2) — the Pareto frontier points in original scale,
+        sorted left-to-right. Returns empty array if no valid points exist.
+    """
     pts = np.array(points, dtype=float)
     pts = pts[np.isfinite(pts).all(axis=1) & (pts[:, 0] > 0) & (pts[:, 1] > 0)]
     if len(pts) == 0:
@@ -571,6 +769,17 @@ def pareto_lower_left(points) -> np.ndarray:
 
 
 def plot_frontier(trial_summaries, title, save_path):
+    """
+    Plot the Possibilities Frontier for all 8 conditions and save to disk.
+
+    Each condition's frontier is computed from the union of all its trial trajectories.
+    Both axes are log-scaled to match the paper's presentation.
+
+    Args:
+        trial_summaries: {condition: [list of trial dicts]} as returned by run_hyperparameter_search
+        title:           figure title string
+        save_path:       output .png path
+    """
     fig, ax = plt.subplots(figsize=(10, 8))
     for label, trials in trial_summaries.items():
         all_pts  = [pt for t in trials for pt in t["points"]]
@@ -594,6 +803,17 @@ def plot_frontier(trial_summaries, title, save_path):
 
 
 def plot_model_sizes(winning_models, title, save_path):
+    """
+    Plot a grouped bar chart of winning model parameter counts (SGD vs Dropout).
+
+    Reproduces the style of Figures 2, 4, 6 in Goodfellow et al. (2015):
+    4 activation groups on the X-axis, two bars each (SGD and Dropout).
+
+    Args:
+        winning_models: {condition: param_count} dict
+        title:          figure title string
+        save_path:      output .png path
+    """
     x   = np.arange(len(ACTIVATIONS))
     w   = 0.35
     sgd = [winning_models.get(f"{a}_SGD",     0) for a in ACTIVATIONS]
@@ -630,6 +850,13 @@ def save_and_plot(ckpt, fig_num, frontier_title, size_title):
 # =============================================================================
 
 def run_scenario_1():
+    """
+    Run Scenario 1: Input Reformatting (Permuted MNIST → Permuted MNIST).
+
+    Task A and Task B are both MNIST but with different random pixel permutations.
+    The network must relearn the pixel layout while retaining digit recognition.
+    Reproduces Figures 1 and 2 of Goodfellow et al. (2015).
+    """
     tqdm.write("\n" + "=" * 60)
     tqdm.write("SCENARIO 1 – Input Reformatting (Permuted MNIST)")
     tqdm.write("=" * 60)
@@ -650,6 +877,13 @@ def run_scenario_1():
 
 
 def run_scenario_2_paper_pair():
+    """
+    Run Scenario 2: Similar Tasks (Amazon Kitchen → Amazon DVD).
+
+    Both tasks are sentiment classification on Amazon product reviews from different
+    but semantically related categories. The shared vocabulary makes partial transfer
+    possible. Reproduces Figures 3 and 4 of Goodfellow et al. (2015).
+    """
     tqdm.write("\n" + "=" * 60)
     tqdm.write("SCENARIO 2 – Similar Tasks (Amazon Kitchen → DVD)")
     tqdm.write("=" * 60)
@@ -667,6 +901,16 @@ def run_scenario_2_paper_pair():
 
 
 def run_scenario_3():
+    """
+    Run Scenario 3: Dissimilar Tasks (MNIST 2/9 → Amazon DVD).
+
+    Task A is binary MNIST digit classification (digits 2 vs 9).
+    Task B is Amazon DVD sentiment analysis.
+    Because the input spaces are incompatible (784 pixels vs 5000 bag-of-words),
+    Amazon features are compressed to 784 dims via TruncatedSVD — see
+    get_amazon_reduced() and docs/methodology.md for the deviation note.
+    Reproduces Figures 5 and 6 of Goodfellow et al. (2015).
+    """
     tqdm.write("\n" + "=" * 60)
     tqdm.write("SCENARIO 3 – Dissimilar Tasks (MNIST 2/9 → Amazon DVD)")
     tqdm.write("=" * 60)

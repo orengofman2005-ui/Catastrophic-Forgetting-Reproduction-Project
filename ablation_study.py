@@ -129,7 +129,25 @@ def train_one_epoch_abl(model, loader, optimizer, hp, epoch):
 
 
 def run_sequential(model, t1_train, t1_val, t1_test, t2_train, t2_val, t2_test, hp):
-    """Train on Task1, record baseline, then train on Task2, record forgetting."""
+    """
+    Train on Task A until early stopping, then train on Task B, and return forgetting metrics.
+
+    Forgetting is defined as:
+        forgetting = old_task_error_after_task2 - old_task_error_after_task1
+
+    A positive value means the model lost Task A ability after learning Task B.
+    The best_joint score (old + new test error at the best joint-val checkpoint) is
+    also returned for cross-condition comparison.
+
+    Args:
+        model:    AblationMLP to train (modified in-place)
+        t1_*:     Task A train/val/test DataLoaders
+        t2_*:     Task B train/val/test DataLoaders
+        hp:       SimpleNamespace with lr, momentum schedule, max-norm, and weight_decay fields
+
+    Returns:
+        (best_joint, forgetting) — both floats
+    """
     optimizer = optim.SGD(model.parameters(), lr=hp.lr,
                           momentum=hp.init_momentum,
                           weight_decay=getattr(hp, 'weight_decay', 0.0))
@@ -176,7 +194,18 @@ def run_sequential(model, t1_train, t1_val, t1_test, t2_train, t2_val, t2_test, 
 # =============================================================================
 
 def ablation_dropout():
-    """Compare dropout_hidden in {0.0, 0.2, 0.5} on Scenario 1 (Permuted MNIST)."""
+    """
+    Ablation 1: vary dropout_hidden in {0.0, 0.2, 0.5} on Scenario 1 (Permuted MNIST).
+
+    All other settings are fixed (ReLU activation, same permutation pair, N_TRIALS trials).
+    When dropout_hidden > 0, dropout_input is set to 0.2 to match the main experiment.
+    When dropout_hidden == 0, dropout_input is also 0 (fully SGD baseline).
+
+    Returns:
+        results:      dict mapping label → {best_joint_mean, best_joint_std,
+                                            forgetting_mean, forgetting_std}
+        dropout_rates: list of the tested dropout values
+    """
     dropout_rates = [0.0, 0.2, 0.5]
     rng = np.random.default_rng(SEED)
     perm1 = torch.from_numpy(rng.permutation(784))
@@ -219,7 +248,19 @@ def ablation_dropout():
 # =============================================================================
 
 def ablation_weight_decay():
-    """Compare weight_decay in {0, 1e-4, 1e-3} on Scenario 1."""
+    """
+    Ablation 2: vary L2 weight decay in {0, 1e-4, 1e-3} on Scenario 1 (Permuted MNIST).
+
+    All conditions use Dropout (p_hidden=0.5, p_input=0.2) to isolate the marginal
+    effect of weight decay on top of an already-Dropout-regularized baseline.
+    A different permutation pair and seed offset are used to avoid correlation
+    with the dropout ablation results.
+
+    Returns:
+        results:   dict mapping label → {best_joint_mean, best_joint_std,
+                                         forgetting_mean, forgetting_std}
+        wd_values: list of the tested weight decay values
+    """
     wd_values = [0.0, 1e-4, 1e-3]
     rng = np.random.default_rng(SEED + 100)
     perm1 = torch.from_numpy(rng.permutation(784))
