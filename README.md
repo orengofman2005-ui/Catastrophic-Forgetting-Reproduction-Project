@@ -10,6 +10,19 @@
 
 ---
 
+## Documentation
+
+| File | Contents |
+|---|---|
+| [docs/introduction.md](docs/introduction.md) | Background, paper choice rationale, hypotheses |
+| [docs/methodology.md](docs/methodology.md) | Experiment design, workflow stages, verification steps, deviations |
+| [docs/results.md](docs/results.md) | Full reproduction table + quantitative error analysis |
+| [docs/ablation.md](docs/ablation.md) | Ablation study results and interpretation |
+| [docs/conclusion.md](docs/conclusion.md) | Conclusions, per-scenario analysis, limitations, future work |
+| [ai_documentation.md](ai_documentation.md) | AI-assisted development log |
+
+---
+
 ## Table of Contents
 
 - [Research Question](#research-question)
@@ -18,7 +31,6 @@
 - [Expected Outputs](#expected-outputs)
 - [Reproduced Figures](#reproduced-figures)
 - [Ablation Study](#ablation-study)
-- [Documentation](#documentation)
 
 ---
 
@@ -158,15 +170,3 @@ Beyond reproduction, we ran controlled ablation experiments to isolate the mecha
 
 Dropout is the dominant mechanism for forgetting resistance (−55% at p=0.5). Weight decay shows negligible additional benefit. See [docs/ablation.md](docs/ablation.md) for full analysis.
 
----
-
-## Documentation
-
-| File | Contents |
-|---|---|
-| [docs/introduction.md](docs/introduction.md) | Paper choice rationale, background, hypotheses |
-| [docs/methodology.md](docs/methodology.md) | Experiment design, workflow stages, verification steps, deviations |
-| [docs/results.md](docs/results.md) | Full reproduction table + error analysis |
-| [docs/conclusion.md](docs/conclusion.md) | Conclusions, per-scenario analysis, limitations, future work |
-| [docs/ablation.md](docs/ablation.md) | Ablation study results and interpretation |
-| [ai_documentation.md](ai_documentation.md) | AI-assisted development log |
