@@ -18,7 +18,7 @@
 | [docs/methodology.md](docs/methodology.md) | Experiment design, workflow stages, verification steps, deviations |
 | [docs/results.md](docs/results.md) | Full reproduction table + quantitative error analysis |
 | [docs/ablation.md](docs/ablation.md) | Ablation study results and interpretation |
-| [docs/conclusion.md](docs/conclusion.md) | Conclusions, per-scenario analysis, limitations, future work |
+| [docs/takeaways.md](docs/takeaways.md) | Takeaways, per-scenario analysis, limitations, reflection |
 | [ai_documentation.md](ai_documentation.md) | AI-assisted development log |
 
 ---

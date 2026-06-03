@@ -1,4 +1,4 @@
-# Conclusion
+# Takeaways
 
 ## Answer to the Research Question
 
@@ -80,3 +80,13 @@ ReLU_Dropout ranks first (0.151) and Maxout_Dropout second (0.161) — Dropout m
 - Validate Amazon preprocessing against Glorot et al. (2011b)
 - Test sensitivity to patience size (15 / 50 / 100 epochs)
 - Compare with modern Continual Learning methods (EWC, Progressive Nets)
+
+---
+
+## Reflection
+
+Going into this project, we assumed that reproducing a 2015 paper would be relatively straightforward — the methods are well-established, the datasets are public, and the architecture is a simple MLP. What we did not anticipate was how much of the difficulty would come not from the model itself, but from the details the paper does not report: the exact hyperparameter ranges, the patience setting, the input preprocessing for Scenario 3. Every one of those missing details required a judgment call, and each judgment call introduced a potential source of divergence from the original results.
+
+The most surprising finding for us was in Scenario 3. We expected Maxout+Dropout to lead — that was the paper's headline result — but in our run ReLU+Dropout came out on top (0.151 vs. 0.161). At first we suspected a bug. After verifying the checkpoints and re-reading the methodology, we concluded it is most likely a combination of our SVD deviation and the limited 8-trial search. It was a good reminder that "qualitative agreement" does not mean "identical ranking at the margins."
+
+The ablation study was the part we found most valuable personally. Running the main experiment tells you *what* happens; the ablation tells you *why*. Seeing that Dropout alone accounts for a 55% reduction in forgetting — and that weight decay adds almost nothing on top of it — gave us a much more concrete understanding of the mechanism than reading the paper alone ever could. If we had more compute, isolating the effect of patience (15 vs. 100 epochs) would be the next thing we would run.
