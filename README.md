@@ -91,7 +91,6 @@ Dropout methods rank 1–2 in all 3 scenarios. In Scenario 3, ReLU+Dropout (0.15
 │   ├── scenario_5_repro.pt     # Checkpoint: Scenario 3 results
 │   ├── fig_s*_frontier.png     # Frontier figures
 │   ├── fig_s*_params.png       # Model size figures
-│   ├── fig_s*_errorbars.png    # Error bar figures (mean ± std)
 │   └── ablation_*.png          # Ablation figures
 │
 ├── data/
