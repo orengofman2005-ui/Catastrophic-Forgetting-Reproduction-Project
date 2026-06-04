@@ -251,13 +251,13 @@ for cond, trials in d["trial_summaries"].items():
 
 ## Stage 5 — Figure Generation
 
-**Goal:** Produce 3 figure types per scenario: Frontier curve, model-size bar chart, and error-bar chart.
+**Goal:** Produce 2 figure types per scenario: Frontier curve and model-size bar chart.
 
 ```bash
 python plot_results.py
 ```
 
-**Output:** `results_repro/fig_s{1,3,5}_{frontier,params,errorbars}.png`
+**Output:** `results_repro/fig_s{1,3,5}_{frontier,params}.png`
 
 ### Figure types
 
@@ -265,13 +265,12 @@ python plot_results.py
 |---|---|---|---|
 | Frontier | Old task error | New task error | Pareto lower-left curve per condition |
 | Model sizes | Condition | Parameter count | Winning model size per condition |
-| Error bars | Condition | best_joint mean ± std | Variance across 8 trials |
 
 ### Verification
 
 | Check | Method |
 |---|---|
-| All 9 figures generated | `fig_s{1,3,5}_{frontier,params,errorbars}.png` exist in `results_repro/` |
+| All 6 figures generated | `fig_s{1,3,5}_{frontier,params}.png` exist in `results_repro/` |
 | Frontier is non-empty | All 8 conditions appear as labeled curves |
 | Qualitative ordering matches paper | Compare to `paper_figures/Fig{1,3,5}_*.png` |
 
@@ -281,7 +280,7 @@ import os
 expected = [
     f"results_repro/fig_s{s}_{t}.png"
     for s in [1, 3, 5]
-    for t in ["frontier", "params", "errorbars"]
+    for t in ["frontier", "params"]
 ]
 for path in expected:
     status = "OK" if os.path.exists(path) else "MISSING"
