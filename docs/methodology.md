@@ -352,12 +352,15 @@ for label, v in abl["dropout"].items():
 | Batch size | 128 | 256 | Medium — different gradient noise |
 | Seed | not specified | 42 only | High — no variance estimation |
 | Scenario 3 input (Amazon) | Full vocabulary | TruncatedSVD → 784 dims | Medium — see note below |
+| Frontier construction | Lower convex hull (algorithm unspecified) | Strict lower-left Pareto frontier | Medium — see note below |
 
 > **Patience Bias:** Patience=15 (vs. 100) creates a systematic bias against Dropout — Dropout converges more slowly than SGD, so short patience gives a relative advantage to SGD. The findings on Dropout superiority are therefore **conservative**: under full patience, the performance gap is expected to be larger.
 
 > **Scenario 3 deviation:** MNIST (784 pixels) and Amazon Reviews (5000+ features) have incompatible input sizes. We apply `TruncatedSVD` to compress Amazon to 784 dims, fit on training data only. Absolute error values in Scenario 3 are not directly comparable to the paper, but method rankings remain valid.
 
 > **Single seed:** Using seed=42 for all experiments means results represent one specific random initialization. Rankings close in value (Δ < 0.005) should be treated as effectively tied.
+
+> **Frontier construction:** The paper uses a lower convex hull (algorithm unspecified). We implemented a strict lower-left Pareto frontier — a point is included only if no other point is simultaneously better on both axes. A convex hull can include dominated points in concave regions; Pareto never does. This means Figures 1, 3, and 5 are not directly comparable to the originals on a point-by-point basis, though the relative ordering of methods remains interpretable.
 
 ---
 
