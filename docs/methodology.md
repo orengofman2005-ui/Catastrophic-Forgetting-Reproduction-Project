@@ -71,6 +71,24 @@ print(f"input_dim={dim}, n_classes={n_cls}")  # Expected: 784, 2
 - **Max-norm constraint:** applied after each optimizer step — clips per-row weight norm to a per-layer ceiling sampled from `U[1.0, 5.0]`.
 - **Dropout:** `dropout_input=0.2` on the input layer, `dropout_hidden=0.5` on both hidden layers (fixed, not part of HP search).
 
+### What is Dropout and why does it matter here?
+
+Dropout (Hinton et al., 2012) is a training technique that randomly silences a random subset of neurons at each training step. Each neuron is independently switched off with probability `p` — so with `p=0.5`, roughly half the network is inactive on any given update. At test time, all neurons are active but their output weights are scaled down by `p` to compensate.
+
+**Why this helps against catastrophic forgetting:**
+
+Without dropout, a network trained with SGD tends to concentrate knowledge in a small number of highly-specialized neurons. When Task B training begins, those neurons get overwritten aggressively, erasing Task A. Dropout prevents this by forcing the network to distribute knowledge across many neurons — no single neuron can become the sole carrier of any piece of information, because it might be silenced at any moment. When Task B comes along and some weights shift, the information about Task A is redundantly stored across enough neurons that much of it survives.
+
+A secondary effect is that dropout enables training of larger networks without overfitting. Larger networks have more spare capacity to accommodate a second task without fully overwriting the first.
+
+**SGD vs Dropout — the core distinction:**
+
+| | SGD | Dropout |
+|---|---|---|
+| Knowledge storage | Concentrated in few neurons | Distributed across many neurons |
+| Optimal model size | Small (to avoid overfitting) | Large (dropout handles regularization) |
+| Forgetting | High | Significantly lower |
+
 ```python
 # Maxout layer — each output unit is the max over k=2 inputs
 class Maxout(nn.Module):
