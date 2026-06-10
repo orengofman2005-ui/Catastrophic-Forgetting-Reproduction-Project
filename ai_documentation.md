@@ -23,7 +23,7 @@ An activation function is a mathematical function applied inside a neural networ
 MNIST is a dataset of 70,000 handwritten digit images (0–9), each 28×28 pixels. It's one of the most common datasets used in machine learning research because it's small, clean, and free to download.
 
 **Us:**
-Ok we found the paper. It's on arXiv. Is arXiv a real journal?
+Is arXiv a real journal?
 
 **Claude:**
 arXiv is a preprint server — papers there haven't necessarily gone through peer review. However, this specific paper was also published as part of a workshop at ICLR 2014, which is a top machine learning conference. So yes, it counts as a recognized scientific publication.
