@@ -59,7 +59,7 @@ The original paper does not publish exact numbers. The table below reports our m
 | Maxout + Dropout | 0.161 | 2 | 1–2 | Yes |
 | LWTA + SGD | 0.180 | 3 | 5–6 | Partial |
 | ReLU + SGD | 0.189 | 4 | 3 | Partial |
-| Maxout + SGD | 0.189 | 5 | 1–2 | Partial |
+| Maxout + SGD | 0.189 | 5 | 3-4 | Partial |
 | LWTA + Dropout | 0.190 | 6 | 4–5 | Yes |
 | Sigmoid + SGD | 0.205 | 7 | 7–8 | Yes |
 | Sigmoid + Dropout | 0.245 | 8 | 7–8 | Yes |
