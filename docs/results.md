@@ -26,30 +26,30 @@ The original paper does not publish exact numbers. The table below reports our m
 | Condition | Our best_joint | Rank (Ours) | Rank (Paper, visual) | Match |
 |---|---|---|---|---|
 | Maxout + Dropout | **0.039** | 1 | 1 | Yes |
-| Maxout + SGD | 0.042 | 2 | 4 | Yes |
-| ReLU + Dropout | 0.044 | 3 | 2 | Yes |
-| LWTA + Dropout | 0.045 | 4 | 3 | Yes |
+| Maxout + SGD | 0.042 | 2 | 4 | Partial |
+| ReLU + Dropout | 0.044 | 3 | 2 | Partial |
+| LWTA + Dropout | 0.045 | 4 | 3 | Partial |
 | ReLU + SGD | 0.059 | 5 | 5-6 | Yes |
 | LWTA + SGD | 0.108 | 6 | 5-6 | Yes |
 | Sigmoid + SGD | 0.173 | 7 | 6-7 | Yes |
 | Sigmoid + Dropout | 0.203 | 8 | 7-8 | Yes |
 
-**Qualitative match: strong agreement (8/8 major rankings preserved).**
+**Qualitative match: moderate agreement (5/8 Yes, 3/8 Partial — bottom half matches well; top-group order diverges slightly, with Maxout+SGD ranking 2nd in ours vs 4th in paper).**
 
 ### Scenario 2 — Similar Tasks (Amazon Kitchen -> Amazon DVD)
 
 | Condition | Our best_joint | Rank (Ours) | Rank (Paper, visual) | Match |
 |---|---|---|---|---|
 | ReLU + Dropout | **0.309** | 1 | 1–2 | Yes |
-| ReLU + SGD | 0.325 | 2 | 3 | Yes |
-| Maxout + Dropout | 0.316 | 3 | 1-2 | Yes |
+| ReLU + SGD | 0.325 | 2 | 3 | Partial |
+| Maxout + Dropout | 0.316 | 3 | 1–2 | Partial |
 | Maxout + SGD | 0.341 | 4 | 4 | Yes |
-| LWTA + Dropout | 0.347 | 3-4 | 5–6 | Yes |
-| LWTA + SGD | 0.356 | 6 | 8 | Yes |
-| Sigmoid + SGD | 0.813 | 7 | 5-6 | Yes |
-| Sigmoid + Dropout | 0.869 | 8 | 4-5 | Yes |
+| LWTA + Dropout | 0.347 | 5 | 5–6 | Yes |
+| LWTA + SGD | 0.356 | 6 | 5–6 | Yes |
+| Sigmoid + SGD | 0.813 | 7 | 7–8 | Yes |
+| Sigmoid + Dropout | 0.869 | 8 | 7–8 | Yes |
 
-**Qualitative match: strong agreement (8/8 major rankings preserved).**
+**Qualitative match: moderate agreement (6/8 Yes, 2/8 Partial — Maxout+Dropout ranks 3rd in ours vs 1–2 in paper; ReLU+SGD ranks 2nd in ours vs 3rd in paper; Sigmoid methods correctly placed last).**
 
 ### Scenario 3 — Dissimilar Tasks (MNIST 2/9 -> Amazon DVD)
 
@@ -60,11 +60,11 @@ The original paper does not publish exact numbers. The table below reports our m
 | LWTA + SGD | 0.180 | 3 | 5–6 | Partial |
 | ReLU + SGD | 0.189 | 4 | 3 | Partial |
 | Maxout + SGD | 0.189 | 5 | 3-4 | Partial |
-| LWTA + Dropout | 0.190 | 6 | 4–5 | Yes |
+| LWTA + Dropout | 0.190 | 6 | 4–5 | Partial |
 | Sigmoid + SGD | 0.205 | 7 | 7–8 | Yes |
 | Sigmoid + Dropout | 0.245 | 8 | 7–8 | Yes |
 
-**Qualitative match: partial for Scenario 3.** Dropout methods (ReLU_Dropout, Maxout_Dropout) rank 1–2, consistent with the paper. However, within the SGD group, LWTA_SGD (0.180) places above ReLU_SGD and Maxout_SGD (both 0.189), which diverges from the paper's ranking. This is consistent with the SVD feature-reduction deviation noted below and the limited 8-trial HP search.
+**Qualitative match: partial agreement (4/8 Yes, 4/8 Partial).** Dropout methods (ReLU_Dropout, Maxout_Dropout) and Sigmoid methods correctly rank 1–2 and 7–8 respectively. However, the mid-group ordering diverges: LWTA_SGD (0.180) places 3rd in ours vs 5–6 in paper; LWTA_Dropout ranks 6th in ours vs 4–5 in paper; ReLU_SGD and Maxout_SGD are slightly displaced within the SGD group. This is consistent with the SVD deviation and limited 8-trial HP search.
 
 ---
 
@@ -136,9 +136,9 @@ Specifically:
 
 | Scenario | Qualitative Match | Largest Deviation | Primary Cause |
 |---|---|---|---|
-| Scenario 1 | Full (8/8) | < 1% (Maxout ranking) | Sampling noise |
-| Scenario 2 | Full (8/8) | ~3–6% above paper | Fewer trials + short patience |
-| Scenario 3 | Partial (6/8) | SGD-group ordering diverges | SVD deviation + 8 trials |
+| Scenario 1 | Moderate (5/8 Yes, 3/8 Partial) | Top-group order differs slightly | Sampling noise — Maxout+SGD wins 2nd in ours vs 4th in paper |
+| Scenario 2 | Moderate (6/8 Yes, 2/8 Partial) | ~3–6% above paper | Fewer trials + short patience; Maxout+Dropout displaced to 3rd |
+| Scenario 3 | Partial (4/8 Yes, 4/8 Partial) | Mid-group ordering diverges | SVD deviation + 8 trials; LWTA_SGD unexpectedly 3rd |
 
 The deviations are systematic and explainable — they do not undermine the paper's conclusions. All three hypotheses tested in this project are supported by our results.
 
