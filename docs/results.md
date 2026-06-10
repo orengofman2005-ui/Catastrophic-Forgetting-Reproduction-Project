@@ -96,23 +96,6 @@ Our code even contains the function `get_padded_binary_mnist_loaders(target_dim)
 
 ---
 
-## Paper vs Ours — Quantitative Deviation Table
-
-The original paper reports results graphically. Values in the "Paper (visual)" column are read off the figures; precision is ±0.01.
-
-| Condition | Scenario | Paper (visual) | Ours | Deviation | Notes |
-|---|---|---|---|---|---|
-| Maxout + Dropout | 1 | ~0.04 | 0.039 | −2% | Within read-off precision |
-| ReLU + Dropout | 1 | ~0.04–0.05 | 0.044 | ~0% | Within read-off precision |
-| Sigmoid + SGD | 1 | ~0.15–0.20 | 0.173 | ~0% | Within read-off precision |
-| ReLU + Dropout | 2 | ~0.25–0.30 | 0.309 | +3–6% | Fewer trials + short patience |
-| Maxout + Dropout | 2 | ~0.25–0.30 | 0.316 | +5–7% | Fewer trials + short patience |
-| Sigmoid + Dropout | 2 | ~0.80 | 0.869 | +9% | Fewer trials + sparse input sensitivity |
-| ReLU + Dropout | 3 | ~0.17 | 0.151 | −11% | Approximate (SVD deviation); best condition |
-| Maxout + Dropout | 3 | ~0.17 | 0.161 | −5% | Approximate (SVD deviation) |
-| Maxout + SGD | 3 | ~0.17 | 0.189 | +11% | Approximate (SVD deviation) |
-
-**Summary:** Scenario 1 matches closely (< 2%). Scenario 2 is systematically 3–9% above paper, attributable to 8 vs 25 trials and patience=15. Scenario 3 is approximate due to the SVD feature-reduction deviation.
 
 ---
 
