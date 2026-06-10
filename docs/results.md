@@ -46,10 +46,10 @@ The original paper does not publish exact numbers. The table below reports our m
 | Maxout + SGD | 0.341 | 4 | 4 | Yes |
 | LWTA + Dropout | 0.347 | 3-4 | 5–6 | Yes |
 | LWTA + SGD | 0.356 | 6 | 8 | Yes |
-| Sigmoid + SGD | 0.813 | 7 | 5-6 | Yes |
-| Sigmoid + Dropout | 0.869 | 8 | 4-5 | Yes |
+| Sigmoid + SGD | 0.813 | 7 | 5-6 | No |
+| Sigmoid + Dropout | 0.869 | 8 | 4-5 | No |
 
-**Qualitative match: moderate agreement (6/8 Yes, 2/8 Partial — Maxout+Dropout ranks 3rd in ours vs 1–2 in paper; ReLU+SGD ranks 2nd in ours vs 3rd in paper; Sigmoid methods correctly placed last).**
+**Qualitative match: partial agreement (4/8 Yes, 2/8 Partial, 2/8 No — Sigmoid methods rank 7–8 in ours but 4–6 in paper; Maxout+Dropout ranks 3rd in ours vs 1–2 in paper; ReLU+SGD ranks 2nd in ours vs 3rd in paper).**
 
 ### Scenario 3 — Dissimilar Tasks (MNIST 2/9 -> Amazon DVD)
 
@@ -149,7 +149,7 @@ Specifically:
 | Scenario | Qualitative Match | Largest Deviation | Primary Cause |
 |---|---|---|---|
 | Scenario 1 | Moderate (5/8 Yes, 3/8 Partial) | Top-group order differs slightly | Sampling noise — Maxout+SGD wins 2nd in ours vs 4th in paper |
-| Scenario 2 | Moderate (6/8 Yes, 2/8 Partial) | ~3–6% above paper | Fewer trials + short patience; Maxout+Dropout displaced to 3rd |
+| Scenario 2 | Partial (4/8 Yes, 2/8 Partial, 2/8 No) | ~3–6% above paper; Sigmoid ranks much lower than paper | Fewer trials + short patience; Sigmoid sensitivity to sparse input |
 | Scenario 3 | Partial (4/8 Yes, 4/8 Partial) | Mid-group ordering diverges | SVD deviation + 8 trials; LWTA_SGD unexpectedly 3rd |
 
 The deviations are systematic and explainable — they do not undermine the paper's conclusions. All three hypotheses tested in this project are supported by our results.
@@ -206,6 +206,6 @@ Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most 
 |---|---|---|
 | Dropout superior to SGD | Dropout best_joint lower in 3/4 activation functions (Scenario 1); rank 1 in S1, top-2 in S3; Sigmoid+SGD beats Sigmoid+Dropout in S2 and S3 (exception) | Partial |
 | Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 (1st S1) / 0.316 (3rd S2) / 0.161 (2nd S3) — top-2 in S1 and S3, 3rd in S2 | Partial |
-| Sigmoid worst across all scenarios | best_joint: 0.173 / 0.813 / 0.205 | Yes |
+| Sigmoid worst in our results | Ranks 7–8 in all our scenarios (best_joint: 0.173 / 0.813 / 0.205); however in the paper Sigmoid ranks 4–6 in S2 — not worst | No |
 | LWTA inconsistent across scenarios | LWTA_SGD 3rd in S3 (0.180) but 6th in S2 (0.356); LWTA_Dropout 6th in S3 (0.190) and 5th in S2 (0.347) — performance swings across scenarios | Yes |
 | Ranking shifts between scenarios | Top method changes: Maxout (S1) → ReLU (S2) → ReLU (S3) | Yes |
