@@ -44,10 +44,10 @@ The original paper does not publish exact numbers. The table below reports our m
 | ReLU + SGD | 0.325 | 2 | 3 | Partial |
 | Maxout + Dropout | 0.316 | 3 | 1–2 | Partial |
 | Maxout + SGD | 0.341 | 4 | 4 | Yes |
-| LWTA + Dropout | 0.347 | 5 | 5–6 | Yes |
-| LWTA + SGD | 0.356 | 6 | 5–6 | Yes |
-| Sigmoid + SGD | 0.813 | 7 | 7–8 | Yes |
-| Sigmoid + Dropout | 0.869 | 8 | 7–8 | Yes |
+| LWTA + Dropout | 0.347 | 3-4 | 5–6 | Yes |
+| LWTA + SGD | 0.356 | 6 | 8 | Yes |
+| Sigmoid + SGD | 0.813 | 7 | 5-6 | Yes |
+| Sigmoid + Dropout | 0.869 | 8 | 4-5 | Yes |
 
 **Qualitative match: moderate agreement (6/8 Yes, 2/8 Partial — Maxout+Dropout ranks 3rd in ours vs 1–2 in paper; ReLU+SGD ranks 2nd in ours vs 3rd in paper; Sigmoid methods correctly placed last).**
 
