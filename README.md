@@ -58,6 +58,7 @@ Dropout methods rank 1–2 in Scenarios 1 and 3. In Scenario 2, ReLU+Dropout ran
 - Dropout outperforms SGD in 3/4 activation functions (Scenario 1) — consistent with the paper
 - ReLU+Dropout is best in Scenario 3; Maxout+Dropout is best in Scenario 1 — no universal winner
 - Activation function ranking shifts between scenarios — no universal winner
+- Sigmoid+SGD outperforms Sigmoid+Dropout in Scenarios 2 and 3 (S2: 0.813 vs 0.869; S3: 0.205 vs 0.245) — SGD is the exception winner for Sigmoid activation
 
 ---
 
