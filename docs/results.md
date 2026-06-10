@@ -26,13 +26,13 @@ The original paper does not publish exact numbers. The table below reports our m
 | Condition | Our best_joint | Rank (Ours) | Rank (Paper, visual) | Match |
 |---|---|---|---|---|
 | Maxout + Dropout | **0.039** | 1 | 1 | Yes |
-| Maxout + SGD | 0.042 | 2 | 2–3 | Yes |
-| ReLU + Dropout | 0.044 | 3 | 2–3 | Yes |
-| LWTA + Dropout | 0.045 | 4 | 4 | Yes |
-| ReLU + SGD | 0.059 | 5 | 5 | Yes |
-| LWTA + SGD | 0.108 | 6 | 6 | Yes |
-| Sigmoid + SGD | 0.173 | 7 | 7–8 | Yes |
-| Sigmoid + Dropout | 0.203 | 8 | 7–8 | Yes |
+| Maxout + SGD | 0.042 | 2 | 4 | Yes |
+| ReLU + Dropout | 0.044 | 3 | 2 | Yes |
+| LWTA + Dropout | 0.045 | 4 | 3 | Yes |
+| ReLU + SGD | 0.059 | 5 | 5-6 | Yes |
+| LWTA + SGD | 0.108 | 6 | 5-6 | Yes |
+| Sigmoid + SGD | 0.173 | 7 | 6-7 | Yes |
+| Sigmoid + Dropout | 0.203 | 8 | 7-8 | Yes |
 
 **Qualitative match: strong agreement (8/8 major rankings preserved).**
 
@@ -42,12 +42,12 @@ The original paper does not publish exact numbers. The table below reports our m
 |---|---|---|---|---|
 | ReLU + Dropout | **0.309** | 1 | 1–2 | Yes |
 | ReLU + SGD | 0.325 | 2 | 3 | Yes |
-| Maxout + Dropout | 0.316 | 3 | 2–3 | Yes |
+| Maxout + Dropout | 0.316 | 3 | 1-2 | Yes |
 | Maxout + SGD | 0.341 | 4 | 4 | Yes |
-| LWTA + Dropout | 0.347 | 5 | 5–6 | Yes |
-| LWTA + SGD | 0.356 | 6 | 5–6 | Yes |
-| Sigmoid + SGD | 0.813 | 7 | 7–8 | Yes |
-| Sigmoid + Dropout | 0.869 | 8 | 7–8 | Yes |
+| LWTA + Dropout | 0.347 | 3-4 | 5–6 | Yes |
+| LWTA + SGD | 0.356 | 6 | 8 | Yes |
+| Sigmoid + SGD | 0.813 | 7 | 5-6 | Yes |
+| Sigmoid + Dropout | 0.869 | 8 | 4-5 | Yes |
 
 **Qualitative match: strong agreement (8/8 major rankings preserved).**
 
