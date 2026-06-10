@@ -114,13 +114,25 @@ Our Scenario 2 shows the largest absolute gap from what is visually readable in 
 2. **Short patience (15 vs 100 epochs):** Amazon Review models benefit more from longer training than MNIST models, because the high-dimensional sparse input requires more epochs to converge. Patience=15 terminates training prematurely, disproportionately hurting Scenario 2.
 3. **Single seed:** Averaging over multiple seeds would reduce variance and likely bring the mean closer to the paper's observed value.
 
-#### Scenario 1 and 3: Minor Deviations
+#### Scenario 1: Top-Group Order Diverges
 
-Scenarios 1 and 3 show strong qualitative agreement. Numerical deviations are minor and attributable to the same causes above.
+Scenario 1 shows moderate agreement overall. The bottom half (ReLU+SGD through Sigmoid+Dropout) matches the paper well, but the top group diverges:
+- **Maxout+SGD** ranks 2nd in ours (best_joint=0.042) but 4th in the paper — a 2-position gap. This is the largest individual deviation in Scenario 1.
+- **ReLU+Dropout** ranks 3rd in ours vs 2nd in the paper.
+- **LWTA+Dropout** ranks 4th in ours vs 3rd in the paper.
 
-#### Ordering in Scenario 3
+The cause is the limited 8-trial HP search: Maxout+SGD happened to find a strong configuration by chance, pushing it above ReLU+Dropout and LWTA+Dropout. With 25 trials the paper's ordering would be more robustly reproduced.
 
-In Scenario 3, Dropout methods rank 1–2 (ReLU_Dropout=0.151, Maxout_Dropout=0.161), consistent with the paper. Within the SGD group, LWTA_SGD (0.180) unexpectedly outranks ReLU_SGD and Maxout_SGD (both 0.189), which diverges from the paper's ranking. This partial mismatch is attributable to the SVD feature-reduction deviation and the limited 8-trial HP search.
+#### Scenario 3: Mid-Group Ordering Diverges
+
+Scenario 3 shows partial agreement. The anchors (Dropout methods at ranks 1–2, Sigmoid at ranks 7–8) are correct, but the four mid-group conditions all show Partial matches:
+- **LWTA+SGD** ranks 3rd in ours (0.180) vs 5–6 in the paper — largest individual deviation in Scenario 3.
+- **LWTA+Dropout** ranks 6th in ours vs 4–5 in the paper.
+- **ReLU+SGD** and **Maxout+SGD** (both 0.189) are slightly displaced within the SGD sub-group.
+
+These deviations are attributable to the SVD input-compression deviation and the limited 8-trial HP search.
+
+
 
 ### Why Model Sizes Differ from the Paper
 
@@ -192,8 +204,8 @@ Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most 
 
 | Finding | Quantitative Evidence | Paper Consistent? |
 |---|---|---|
-| Dropout superior to SGD | Dropout best_joint lower in 3/4 activation functions (Scenario 1); top-2 in S3 | Yes |
+| Dropout superior to SGD | Dropout best_joint lower in 3/4 activation functions (Scenario 1); top-2 in S1 and S3; Sigmoid+SGD beats Sigmoid+Dropout in S2 and S3 (exception) | Partial |
 | Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 / 0.316 / 0.161 | Yes |
 | Sigmoid worst across all scenarios | best_joint: 0.173 / 0.813 / 0.205 | Yes |
 | LWTA inconsistent across scenarios | Best_new in S3 (LWTA_Dropout ~0.177), poor in S2 (0.347) | Yes |
-| Ranking shifts between scenarios | Top method changes: Maxout (S1) -> ReLU (S2) -> Maxout (S3) | Yes |
+| Ranking shifts between scenarios | Top method changes: Maxout (S1) → ReLU (S2) → ReLU (S3) | Yes |
