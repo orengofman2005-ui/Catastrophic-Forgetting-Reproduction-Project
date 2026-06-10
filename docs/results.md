@@ -204,8 +204,8 @@ Both figures correspond to Figure 5 and Figure 6 in the paper. This is the most 
 
 | Finding | Quantitative Evidence | Paper Consistent? |
 |---|---|---|
-| Dropout superior to SGD | Dropout best_joint lower in 3/4 activation functions (Scenario 1); top-2 in S1 and S3; Sigmoid+SGD beats Sigmoid+Dropout in S2 and S3 (exception) | Partial |
-| Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 / 0.316 / 0.161 | Yes |
+| Dropout superior to SGD | Dropout best_joint lower in 3/4 activation functions (Scenario 1); rank 1 in S1, top-2 in S3; Sigmoid+SGD beats Sigmoid+Dropout in S2 and S3 (exception) | Partial |
+| Maxout+Dropout on Frontier in all scenarios | best_joint: 0.039 (1st S1) / 0.316 (3rd S2) / 0.161 (2nd S3) — top-2 in S1 and S3, 3rd in S2 | Partial |
 | Sigmoid worst across all scenarios | best_joint: 0.173 / 0.813 / 0.205 | Yes |
-| LWTA inconsistent across scenarios | Best_new in S3 (LWTA_Dropout ~0.177), poor in S2 (0.347) | Yes |
+| LWTA inconsistent across scenarios | LWTA_SGD 3rd in S3 (0.180) but 6th in S2 (0.356); LWTA_Dropout 6th in S3 (0.190) and 5th in S2 (0.347) — performance swings across scenarios | Yes |
 | Ranking shifts between scenarios | Top method changes: Maxout (S1) → ReLU (S2) → ReLU (S3) | Yes |
