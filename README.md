@@ -35,7 +35,7 @@
 > *Can the central conclusions of Goodfellow et al. (2015) — the superiority of Dropout over SGD in preventing catastrophic forgetting, and the scenario-dependent ranking of activation functions — be reproduced in a modern PyTorch environment under consumer hardware constraints (8 trials instead of 25)?*
 
 **Answer: Yes, with strong qualitative agreement across all 3 scenarios.**
-Dropout methods rank 1–2 in all 3 scenarios. In Scenario 3, ReLU+Dropout (0.151) leads — not Maxout as in Scenario 1, confirming scenario-dependent rankings.
+Dropout methods rank 1–2 in Scenarios 1 and 3. In Scenario 2, ReLU+Dropout ranks 1st and ReLU+SGD ranks 2nd, with Maxout+Dropout 3rd. In Scenario 3, ReLU+Dropout (0.151) leads — not Maxout as in Scenario 1, confirming scenario-dependent rankings.
 
 ---
 

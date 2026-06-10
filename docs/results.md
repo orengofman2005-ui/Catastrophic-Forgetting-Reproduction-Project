@@ -41,8 +41,8 @@ The original paper does not publish exact numbers. The table below reports our m
 | Condition | Our best_joint | Rank (Ours) | Rank (Paper, visual) | Match |
 |---|---|---|---|---|
 | ReLU + Dropout | **0.309** | 1 | 1–2 | Yes |
-| Maxout + Dropout | 0.316 | 2 | 1–2 | Yes |
-| ReLU + SGD | 0.325 | 3 | 3 | Yes |
+| ReLU + SGD | 0.325 | 2 | 3 | Yes |
+| Maxout + Dropout | 0.316 | 3 | 2–3 | Yes |
 | Maxout + SGD | 0.341 | 4 | 4 | Yes |
 | LWTA + Dropout | 0.347 | 5 | 5–6 | Yes |
 | LWTA + SGD | 0.356 | 6 | 5–6 | Yes |
@@ -188,7 +188,7 @@ Both figures correspond to Figure 1 and Figure 2 in the paper. The two tasks are
 
 Both figures correspond to Figure 3 and Figure 4 in the paper. Both tasks are sentiment analysis on different Amazon product categories — semantically similar but with different language and features per category.
 
-In Scenario 2, all methods show relatively high errors (best_joint range: 0.309–0.869), reflecting the high-dimensional sparse nature of Amazon Reviews. ReLU_Dropout leads (best_joint=0.309) rather than Maxout_Dropout (0.316) — unlike Scenario 1, reinforcing the claim that there is no universal activation function.
+In Scenario 2, all methods show relatively high errors (best_joint range: 0.309–0.869), reflecting the high-dimensional sparse nature of Amazon Reviews. ReLU_Dropout leads (best_joint=0.309) and ReLU_SGD takes 2nd (0.325), with Maxout_Dropout 3rd (0.316) — unlike Scenario 1, reinforcing the claim that there is no universal activation function.
 
 > **Model sizes note:** The paper's Fig4 shows Dropout winning models substantially larger than SGD (LWTA_Dropout ~40M vs ~3M). Our reproduced Fig4 shows LWTA and Maxout roughly equal between SGD and Dropout (~20M and ~15M respectively), and Sigmoid_SGD actually larger than Sigmoid_Dropout. This discrepancy again reflects the high sensitivity of winning model size to HP sampling at 8 trials.
 
